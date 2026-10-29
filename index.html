@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WHOM · Whom Are You Simulating?</title>
+<meta name="description" content="WHOM builds individual simulation datasets and benchmarks from naturally occurring conversations, around the individual signal: recurring patterns in a person's replies that distinguish them from others in the same situations.">
+<meta property="og:title" content="Whom Are You Simulating? Can AI simulate you, or only anyone?">
+<meta property="og:description" content="Building individual simulation benchmarks from naturally occurring conversations: r/AmItheAsshole, Wikipedia deletion debates, and news comments.">
+<meta property="og:image" content="assets/teaser.jpg">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0}
+:root{
+  --ink:#111110;--ink2:#4f4e49;--mut:#96948d;--line:#e0e0e0;
+  --accent:#c2410c;--accent-ink:#9a3412;--tint:#fff7f1;--tint2:#fdeee3;
+  --own:#d9601a;--other:#2f6fb0;--none:#a3a19b;--sit:#c9c7c1;
+  --ok:#15803d;--no:#b3261e;
+  color-scheme:light;
+}
+html{scroll-behavior:smooth}
+body{font-family:"Inconsolata",ui-monospace,monospace;color:var(--ink);background:#fff;line-height:1.6;font-size:16.5px;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px}
+a{color:var(--accent-ink);text-decoration:none;border-bottom:1px solid #f0c9b0}
+a:hover{border-bottom-color:var(--accent-ink)}
+button{font-family:inherit}
+.sc{font-variant:small-caps;letter-spacing:.03em}
+/* top strip */
+.topbar{border-bottom:1px solid var(--line);font-size:13.5px;color:var(--ink2);position:sticky;top:0;background:rgba(255,255,255,.96);z-index:5}
+.topbar .wrap{display:flex;justify-content:space-between;align-items:center;padding-top:13px;padding-bottom:13px;gap:12px;flex-wrap:wrap;line-height:1}
+.topbar b{color:var(--ink);letter-spacing:.08em}
+.topbar nav{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto;align-items:center}
+.topbar a{border-bottom:none;color:var(--ink2)}
+.topbar a:hover{color:var(--accent-ink)}
+/* hero */
+.hero{padding:64px 0 8px;text-align:center}
+.kickerline{font-size:13px;color:var(--mut);letter-spacing:.03em}
+h1{font-size:31px;font-weight:800;letter-spacing:.01em;line-height:1.35;margin:16px 0 14px}
+.tagline{font-size:21px;color:var(--ink);font-weight:500}
+.tagline em{font-style:normal;color:var(--accent-ink);border-bottom:2px solid var(--accent);cursor:pointer}
+.tagline em.any{color:var(--ink2);border-bottom-color:var(--none)}
+.heroauthors{max-width:740px;margin:30px auto 0;font-size:13.5px;line-height:1.9;color:var(--ink)}
+.heroauthors sup,.heroaffils sup{color:var(--accent-ink);font-size:10.5px;margin-left:1px}
+.heroaffils sup{margin-right:3px;margin-left:0}
+.heroaffils span{white-space:nowrap;margin:0 5px;display:inline-block}
+.heroaffils{max-width:700px;margin:14px auto 0;font-size:12.5px;color:var(--mut);line-height:1.9}
+.heronote{font-size:12px;color:var(--mut);margin-top:12px}
+.tldrbox{max-width:720px;margin:30px auto 0;border:1px solid var(--accent);background:var(--tint);padding:14px 18px;text-align:left;font-size:14.5px;color:var(--ink2);line-height:1.7}
+.tldrbox p{margin:0}
+.tldrbox p+p{margin-top:11px;border-top:1px dashed #efcdb7;padding-top:11px}
+.tldrbox strong{color:var(--ink)}
+.lb{color:var(--accent-ink);font-weight:800;margin-right:7px;text-transform:uppercase;font-size:11.5px;letter-spacing:.09em}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:26px 0 8px}
+.btn{border:1px solid var(--ink);padding:7px 16px;font-size:14px;font-weight:600;color:var(--ink);border-bottom-width:1px}
+.btn:hover{background:var(--ink);color:#fff}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-ink);border-color:var(--accent-ink)}
+.teaser{margin:48px auto 0;max-width:1040px;padding:0 24px}
+.teaser img{width:100%;display:block;border:1px solid var(--line)}
+.panelcaps{display:grid;grid-template-columns:500fr 493fr 495fr 512fr;column-gap:12px;padding:0 .4%;margin-top:8px;font-size:12px;color:var(--ink2);line-height:1.5}
+.panelcaps>div{padding:6px 4px;border-top:2px solid transparent;transition:border-color .2s,background .2s}
+.panelcaps>div.hl{border-top-color:var(--accent);background:var(--tint)}
+.panelcaps b{color:var(--accent-ink);margin-right:6px}
+.pcl{color:var(--mut);font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-right:6px}
+.tz{position:relative}
+.tz .shade{position:absolute;top:0;bottom:0;background:rgba(255,247,241,.0);outline:2px solid transparent;transition:outline-color .2s;pointer-events:none}
+.tz .shade.hl{outline-color:var(--accent)}
+.figcap{font-size:13px;color:var(--mut);max-width:760px;margin:10px auto 0;text-align:center}
+/* sections */
+section.wrap{margin-top:46px}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--accent-ink);text-transform:uppercase;margin-bottom:10px}
+h2{font-size:27px;font-weight:700;line-height:1.3;margin-bottom:14px;letter-spacing:-.01em}
+h3.sub{font-size:19px;font-weight:700;margin:34px 0 8px}
+p.body{color:var(--ink2);max-width:720px;margin-bottom:14px}
+p.body strong{color:var(--ink)}
+blockquote.rq{border-left:3px solid var(--accent);padding:6px 0 6px 16px;margin:18px 0;font-size:18px;font-weight:600;color:var(--ink);max-width:640px}
+/* cards */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.cards3{grid-template-columns:1fr 1fr 1fr}
+.card{border:1px solid var(--line);padding:20px 22px;background:#fff}
+.card h3{font-size:17.5px;font-weight:700;margin-bottom:2px}
+.card .csub{font-size:12.5px;color:var(--accent-ink);font-weight:600;letter-spacing:.06em;margin-bottom:10px}
+.card p{font-size:14.5px;color:var(--ink2)}
+.card .num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12.5px;font-weight:800;margin-right:8px;vertical-align:2px}
+.note{font-size:13.5px;color:var(--mut);margin-top:16px;max-width:760px}
+/* equation */
+.eqbox{border:1px solid var(--line);background:#fafaf8;padding:20px 18px 14px;margin-top:18px;text-align:center}
+.eq{font-size:22px;font-weight:600;display:flex;justify-content:center;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.eq .op{padding-top:2px;color:var(--mut)}
+.eqt{display:inline-flex;flex-direction:column;align-items:center;padding:2px 8px 4px;border-bottom:3px solid transparent;cursor:default;transition:background .2s}
+.eqt i{font-style:italic}
+.eqt small{font-size:12px;font-weight:600;color:var(--mut);margin-top:4px;letter-spacing:.04em}
+.eqt[data-k="sit"]{border-bottom-color:var(--sit)}
+.eqt[data-k="per"]{border-bottom-color:var(--own)}
+.eqt[data-k="per"] small{color:var(--accent-ink)}
+.eqt[data-k="rest"]{border-bottom-color:#ecebe7}
+.eqt:hover,.eqt.hl{background:#fff}
+.eqnote{font-size:13px;color:var(--ink2);margin-top:12px;min-height:42px;max-width:640px;margin-left:auto;margin-right:auto}
+.eqt{cursor:help}
+/* histories */
+.hists{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+.hcard{border:1px solid var(--line);padding:14px 16px;font-size:13.5px;color:var(--ink2);border-top:4px solid var(--none)}
+.hcard.own{border-top-color:var(--own)} .hcard.other{border-top-color:var(--other)}
+.hcard .hh{font-weight:800;color:var(--ink);font-size:14.5px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.ico{display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex:none}
+.ico.own{background:var(--own)} .ico.other{background:var(--other)} .ico.none{background:#fff;color:var(--none);border:1.5px dashed var(--none)}
+.deltas{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px}
+.delta{background:var(--tint);border:1px solid #f3d5c1;padding:12px 14px;font-size:13.5px;color:var(--ink2)}
+.delta b{display:block;color:var(--ink);font-size:15px;margin-bottom:2px}
+.delta.main{background:#fff;border:1.5px solid var(--accent)}
+.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+.step{border:1px solid var(--line);padding:14px 16px;font-size:13.5px;color:var(--ink2);line-height:1.6}
+.sh{font-weight:700;color:var(--ink);font-size:13.5px;margin-bottom:5px;letter-spacing:.02em}
+.pipefig{margin-top:18px;border:1px solid var(--line);cursor:zoom-in}
+.pipefig img{width:100%;display:block}
+/* toulmin */
+.toul{display:grid;grid-template-columns:1.05fr 1fr;gap:18px;margin-top:16px;align-items:start}
+.tpost,.trep{border:1px solid var(--line);background:#fff;padding:14px 16px;font-size:14px;color:var(--ink2)}
+.tpost .tt{font-weight:800;color:var(--ink);margin:2px 0 6px}
+.tlabel{font-size:11.5px;color:var(--mut);letter-spacing:.08em;text-transform:uppercase}
+.trep{margin-bottom:10px}
+.trep .who{font-weight:700;color:var(--ink);font-size:13px;margin-bottom:4px}
+.hlg{transition:background .2s,box-shadow .2s;border-radius:2px}
+.k-claim{background:#fbe1e1}.k-grounds{background:#fbf1c9}.k-warrant{background:#fde3cf}
+.wtag{display:inline-block;margin-top:8px;font-size:11.5px;font-weight:700;letter-spacing:.05em;padding:2px 8px;background:#fde3cf;color:var(--accent-ink);border-radius:2px}
+.tlegend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:12.5px}
+.tlegend span{border:1px solid var(--line);padding:3px 9px;cursor:pointer;color:var(--ink2)}
+.tlegend span:hover,.tlegend span.on{border-color:var(--ink);color:var(--ink)}
+.dimmed .hlg{background:transparent!important;opacity:.55}
+.dimmed .hlg.focus{opacity:1;box-shadow:0 0 0 2px var(--accent)}
+.dimmed .wtag{opacity:.4}
+.dimmed .wtag.focus{opacity:1;box-shadow:0 0 0 2px var(--accent)}
+/* principles */
+.pgroups{margin-top:14px;display:grid;gap:10px}
+.pg{display:grid;grid-template-columns:200px 1fr;gap:10px;align-items:start}
+.pgl{font-size:12.5px;color:var(--mut);padding-top:5px}
+.pchips{display:flex;gap:8px;flex-wrap:wrap}
+.pchip{border:1px solid var(--line);background:#fafaf8;padding:4px 10px;font-size:13px;color:var(--ink);cursor:help;position:relative}
+.pchip:hover{border-color:var(--accent);background:var(--tint)}
+.pdef{margin-top:12px;min-height:66px;border-left:3px solid var(--accent);background:var(--tint);padding:10px 14px;font-size:13.5px;color:var(--ink2)}
+.pdef b{color:var(--ink)}
+/* stats strip */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);margin-top:22px}
+.stat{padding:16px 14px;border-left:1px solid var(--line);font-size:13.5px;color:var(--ink2)}
+.stat:first-child{border-left:none}
+.stat b{display:block;font-size:21px;color:var(--ink);font-weight:800}
+/* tabs */
+.tabs{display:flex;gap:0;flex-wrap:wrap;margin-top:16px;border:1px solid var(--ink);width:max-content;max-width:100%}
+.tabs button{border:none;background:#fff;padding:6px 14px;font-size:13.5px;font-weight:600;cursor:pointer;border-left:1px solid var(--ink);color:var(--ink)}
+.tabs button:first-child{border-left:none}
+.tabs button.on{background:var(--ink);color:#fff}
+.tabrow{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+/* signal bars */
+.sig{margin-top:16px;border:1px solid var(--line);padding:16px 18px 12px}
+.srow{display:grid;grid-template-columns:96px 1fr 210px;gap:12px;align-items:center;padding:8px 0;border-top:1px dashed #ecebe7}
+.srow:first-child{border-top:none}
+.slab{font-weight:700;font-size:14px}
+.slab small{display:block;font-weight:400;color:var(--mut);font-size:11.5px}
+.strack{height:22px;background:#f4f3f0;position:relative;display:flex;overflow:hidden}
+.seg{height:100%;transition:width .5s ease}
+.seg.sit{background:var(--sit)}
+.seg.per{background:var(--own)}
+.strack.hl-sit .seg.sit,.strack.hl-per .seg.per{box-shadow:inset 0 0 0 2px var(--ink)}
+.snum{font-size:12.5px;color:var(--ink2);line-height:1.45}
+.snum b{color:var(--accent-ink)}
+.snum .neg{color:var(--no)}
+.slegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin-top:10px}
+.sw{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:-1px;border-radius:2px}
+/* table */
+.tablewrap{overflow-x:auto;margin-top:16px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:600px}
+th,td{padding:9px 14px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+th{font-size:12.5px;color:var(--mut);font-weight:600;border-top:none;letter-spacing:.03em}
+td:first-child,th:first-child{text-align:left}
+td.l,th.l{text-align:left;white-space:normal}
+tr.dim td{color:var(--mut)}
+.tnote{font-size:13px;color:var(--mut);margin-top:10px;max-width:760px}
+/* dumbbell */
+.dumb{margin-top:16px;border:1px solid var(--line);padding:14px 18px 10px}
+.dhead{display:grid;grid-template-columns:140px 1fr 78px;gap:12px;font-size:12px;color:var(--mut);letter-spacing:.03em;padding-bottom:6px}
+.dhead span:last-child{text-align:right}
+.drow{display:grid;grid-template-columns:140px 1fr 78px;gap:12px;align-items:center}
+.dlab{font-size:13.5px;font-weight:600}
+.dgrp{font-size:11.5px;color:var(--mut);letter-spacing:.08em;text-transform:uppercase;padding:8px 0 2px}
+.dtrack{position:relative;height:30px}
+.dtrack .base{position:absolute;left:0;right:0;top:50%;border-top:1px solid #efeeea}
+.ref{position:absolute;top:0;bottom:0;width:0;transition:left .5s}
+.ref.cnt{border-left:2px solid var(--ink)}
+.ref.maj{border-left:1.5px dashed #8e8c86}
+.ref.chance{border-left:1.5px dotted #c5c3bd}
+.dseg{position:absolute;top:50%;height:3px;margin-top:-1.5px;background:linear-gradient(90deg,var(--other),var(--own));opacity:.55;transition:left .5s,width .5s}
+.dot{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;transition:left .5s;z-index:2}
+.dot.none{background:#fff;border:2px solid var(--none)}
+.dot.other{background:var(--other)}
+.dot.own{background:var(--own);width:15px;height:15px;margin:-7.5px 0 0 -7.5px}
+.dot .v{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--ink2);white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none}
+.drow:hover .dot .v,.drow.show .dot .v{opacity:1}
+.ddel{text-align:right;font-weight:800;font-size:14px;color:var(--accent-ink)}
+.ddel.ns{color:var(--mut);font-weight:600}
+.daxis{position:relative;height:22px;margin-left:152px;margin-right:90px;font-size:11px;color:var(--mut)}
+.daxis span{position:absolute;transform:translateX(-50%);top:4px;transition:left .5s}
+.dlegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin-top:8px}
+.dlegend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.dlegend .ln{display:inline-block;width:0;height:12px;margin-right:6px;vertical-align:-1px}
+.offscale{position:absolute;right:-2px;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--ink);white-space:nowrap}
+/* diverging bars */
+.dvwrap{margin-top:14px;border:1px solid var(--line);padding:14px 18px}
+.dvhead{display:grid;grid-template-columns:110px repeat(3,1fr);gap:12px;font-size:12px;color:var(--mut);padding-bottom:4px}
+.dvrow{display:grid;grid-template-columns:110px repeat(3,1fr);gap:12px;align-items:center;padding:7px 0}
+.dvcell{position:relative;height:26px;background:#f7f6f3}
+.dvzero{position:absolute;top:0;bottom:0;border-left:1px solid #b9b7b1}
+.dvbar{position:absolute;top:4px;bottom:4px;background:var(--own);transition:left .5s,width .5s,background .3s}
+.dvbar.cp{background:var(--none)}
+.dvval{position:absolute;top:50%;transform:translateY(-50%);font-size:12.5px;font-weight:700;transition:left .5s;white-space:nowrap}
+/* sft */
+.sft{margin-top:14px;border:1px solid var(--line);padding:14px 18px}
+.sftrow{display:grid;grid-template-columns:150px 1fr 120px;gap:12px;align-items:center;padding:8px 0;border-top:1px dashed #ecebe7}
+.sftrow:first-child{border-top:none}
+.sftrow.hl .slab{color:var(--accent-ink)}
+.bars3{display:grid;gap:3px}
+.b3{height:9px;background:#f4f3f0;position:relative}
+.b3 i{position:absolute;left:0;top:0;bottom:0;transition:width .5s}
+.b3 span{position:absolute;top:-3px;font-size:10.5px;color:var(--ink2);transition:left .5s;padding-left:4px;line-height:1}
+.b3.none i{background:var(--none)} .b3.other i{background:var(--other)} .b3.own i{background:var(--own)}
+.sftd{font-size:12.5px;color:var(--ink2);text-align:right;line-height:1.5}
+.sftd b{font-size:14px;color:var(--accent-ink)}
+/* finding cards */
+.fstats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);margin-top:14px}
+.fstat{padding:14px 14px;border-left:1px solid var(--line);font-size:13.5px;color:var(--ink2)}
+.fstat:first-child{border-left:none}
+.fstat b{display:block;font-size:19px;color:var(--ink);font-weight:800}
+/* quiz band */
+.quiz{background:var(--tint);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:46px 0 42px;margin-top:56px}
+.qcard{background:#fff;border:1px solid var(--line);padding:22px 24px;margin-top:18px}
+.qhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--mut);letter-spacing:.05em;margin-bottom:10px}
+.qhead .pill{display:inline-flex;align-items:center;gap:6px}
+.post{border:1px solid var(--line);background:#fafaf8;padding:11px 14px;font-size:14.5px;color:var(--ink)}
+.post b{display:block;color:var(--mut);font-weight:600;font-size:12px;margin-bottom:3px;letter-spacing:.04em}
+.qq{font-size:16px;font-weight:700;margin:16px 0 4px}
+.steplbl{font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--accent-ink);text-transform:uppercase;margin:12px 0 8px}
+.popts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.popt{border:1px solid var(--ink);background:#fff;padding:8px 12px;font-size:14px;font-weight:700;cursor:pointer;text-align:left;color:var(--ink);position:relative;line-height:1.35}
+.popt small{display:block;font-weight:400;font-size:12px;color:var(--ink2);margin-top:2px}
+.popt:hover:not(:disabled){background:var(--ink);color:#fff}
+.popt:hover:not(:disabled) small{color:#ddd}
+.popt.first{box-shadow:inset 4px 0 0 var(--none)}
+.popt .tag{position:absolute;top:6px;right:8px;font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--mut);text-transform:uppercase}
+.popt.right{background:var(--ok);border-color:var(--ok);color:#fff}
+.popt.wrong{background:var(--no);border-color:var(--no);color:#fff}
+.popt.right small,.popt.wrong small,.popt.right .tag,.popt.wrong .tag{color:#f3f3f3}
+.popt.gold{outline:2px solid var(--ok);outline-offset:2px}
+.popt:disabled{cursor:default}
+.histwrap{margin-top:6px;display:none}
+.histtabs{display:flex;gap:0;border:1px solid var(--ink);width:max-content;max-width:100%;margin-bottom:8px}
+.histtabs button{border:none;background:#fff;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;border-left:1px solid var(--ink);display:inline-flex;align-items:center;gap:6px}
+.histtabs button:first-child{border-left:none}
+.histtabs button.on[data-h="own"]{background:var(--own);color:#fff}
+.histtabs button.on[data-h="other"]{background:var(--other);color:#fff}
+.histtabs button .ico{width:16px;height:16px;font-size:10px}
+.histtabs button.on .ico{background:#fff;color:var(--ink)}
+.hist{list-style:none;padding:0;max-height:250px;overflow-y:auto;border:1px solid var(--line);border-left:4px solid var(--own);background:#fff}
+.hist.other{border-left-color:var(--other)}
+.hist li{padding:6px 12px;font-size:13px;color:var(--ink2);border-top:1px solid #f1f0ec;display:grid;grid-template-columns:26px 1fr;gap:4px}
+.hist li:first-child{border-top:none}
+.hist li em{font-style:normal;color:var(--mut);font-size:12px}
+.hist li .vd{font-weight:800;color:var(--ink)}
+.histnote{font-size:12px;color:var(--mut);margin-top:6px}
+.qreveal{display:none;margin-top:14px;border-left:3px solid var(--ok);padding:10px 14px;background:#f2f8f3;font-size:14px;color:var(--ink2)}
+.qreveal.miss{border-left-color:var(--no);background:#fbf1f0}
+.qreveal b{color:var(--ink)}
+.verdict{font-weight:800;font-size:13px;letter-spacing:.05em;margin-bottom:4px}
+.verdict .ok{color:var(--ok)} .verdict .no{color:var(--no)}
+.swapnote{margin-top:8px;font-size:13px;color:var(--other)}
+.swi{vertical-align:-1px}
+.gnav{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px;flex-wrap:wrap}
+.dots{display:flex;gap:6px}
+.dots i{width:9px;height:9px;border-radius:50%;background:#e6e4df;display:block}
+.dots i.cur{background:var(--ink)} .dots i.r{background:var(--ok)} .dots i.w{background:var(--no)}
+.nbtn{border:1px solid var(--ink);background:var(--ink);color:#fff;padding:7px 16px;font-size:14px;font-weight:700;cursor:pointer}
+.nbtn:disabled{background:#fff;color:var(--mut);border-color:var(--line);cursor:default}
+.nbtn.ghost{background:#fff;color:var(--ink)}
+.score{display:none;margin-top:18px;background:#fff;border:1px solid var(--line);padding:18px 22px}
+.score h3{font-size:18px;margin-bottom:10px}
+.cmp{display:grid;grid-template-columns:220px 1fr 64px;gap:10px;align-items:center;font-size:13.5px;padding:4px 0}
+.cmp .bar{height:12px;background:#f4f3f0;position:relative}
+.cmp .bar i{position:absolute;left:0;top:0;bottom:0}
+.cmp .bar i.rng{background:none;border:1px solid currentColor;opacity:.9}
+.cmp b{text-align:right}
+.cmpsep{border-top:1px dashed var(--line);margin:8px 0}
+.outro{font-size:14.5px;color:var(--ink2);margin-top:12px;max-width:720px}
+/* game 2 */
+.g2opts{display:grid;gap:8px;margin-top:12px}
+.g2opt{border:1px solid var(--ink);background:#fff;padding:9px 14px;font-size:14.5px;cursor:pointer;text-align:left;color:var(--ink)}
+.g2opt:hover{background:var(--ink);color:#fff}
+.g2prog{height:4px;background:#efede8;margin-top:14px}
+.g2prog i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.g2res{display:none}
+.prof{display:grid;grid-template-columns:200px 1fr 150px;gap:10px;align-items:center;font-size:13px;padding:3px 0}
+.prof .bar{height:14px;background:#f4f3f0;position:relative}
+.prof .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--none);transition:width .6s}
+.prof.top .bar i{background:var(--own)}
+.prof.top .pn{font-weight:800;color:var(--accent-ink)}
+.prof .bar .ten{position:absolute;top:-3px;bottom:-3px;border-left:1.5px dashed var(--ink)}
+.prof .bar .reddit{position:absolute;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:var(--ink);transform:rotate(45deg)}
+.prof .pv{color:var(--ink2);text-align:right;white-space:nowrap}
+.halves{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+.half{border:1px solid var(--line);padding:12px 14px;font-size:13.5px;color:var(--ink2)}
+.half b{display:block;font-size:16px;color:var(--ink)}
+.passbox{margin-top:14px;padding:12px 16px;font-size:14.5px;border-left:3px solid var(--ok);background:#f2f8f3;color:var(--ink2)}
+.passbox.fail{border-left-color:var(--other);background:#eef4fb}
+.passbox b{color:var(--ink)}
+/* sources */
+.srcgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.kv{border:1px solid var(--line)}
+.kv div{display:grid;grid-template-columns:120px 1fr;gap:10px;padding:7px 12px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink2)}
+.kv div:first-child{border-top:none}
+.kv div span:first-child{color:var(--mut);font-size:12.5px}
+.inst{border:1px solid var(--line);background:#fafaf8;padding:14px 16px;font-size:13px;color:var(--ink2);margin-top:16px}
+.inst .ih{font-weight:800;color:var(--ink);font-size:13.5px}
+.inst .row{display:grid;grid-template-columns:1fr 150px;gap:10px;padding:4px 0;border-top:1px dashed #e8e6e1}
+.inst .row.me{color:var(--ink);font-weight:700}
+.inst .row span:last-child{text-align:right;color:var(--ink2);font-weight:600}
+.inst .opts2{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;margin-top:4px}
+.inst .ok{color:var(--ok);font-weight:800}
+.inst .sec{margin-top:10px;font-size:12px;color:var(--mut);letter-spacing:.05em;text-transform:uppercase}
+.mini{width:100%;font-size:13px;min-width:0}
+.mini th,.mini td{padding:6px 10px}
+/* code */
+code{font-family:inherit;font-size:.96em;background:#f4f3f0;padding:0 4px}
+pre{background:#fafaf8;border:1px solid var(--line);padding:12px 14px;font-size:12.5px;overflow-x:auto;margin-top:14px;line-height:1.5;color:var(--ink);font-family:"Inconsolata",ui-monospace,monospace}
+.copy{float:right;border:1px solid var(--line);background:#fff;font-size:12px;padding:2px 8px;cursor:pointer;margin:-4px -6px 0 8px}
+.copy:hover{border-color:var(--ink)}
+/* lightbox */
+.lightbox{position:fixed;inset:0;background:rgba(17,17,16,.86);display:none;align-items:center;justify-content:center;z-index:20;padding:24px;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:100%;background:#fff}
+.lightbox.on{display:flex}
+/* footer */
+footer{border-top:1px solid var(--line);margin-top:56px;padding:36px 0 48px;font-size:13.5px;color:var(--mut)}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+/* easter egg: crowd mode */
+body.crowd{--accent:#8a8a86;--accent-ink:#6f6f6b;--tint:#f2f2f0;--tint2:#ececea;--own:#8a8a86;--other:#8a8a86}
+body.crowd img{filter:grayscale(1)}
+body.crowd .tagline em{color:var(--ink2);border-bottom-color:#8a8a86}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#111110;color:#fff;font-size:13px;padding:8px 16px;z-index:9;white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
+.toast.warm{background:var(--accent)}
+@media(max-width:760px){
+  h1{font-size:21px;padding:0 6px}.tagline{font-size:16.5px}
+  .deskbr{display:none}
+  .hero.wrap{padding:44px 18px 8px}
+  .heroauthors{font-size:12.5px;line-height:1.7}
+  .heroaffils{font-size:11.5px}
+  .heronote{font-size:11px}
+  section.wrap{margin-top:39px}
+  .quiz{padding:40px 0 36px}
+  .qcard{padding:16px 14px}
+  .panelcaps{grid-template-columns:1fr 1fr;gap:6px 14px}
+  .teaser{padding:0 16px}
+  .wrap{padding:0 16px}
+  .topbar nav{gap:12px;font-size:12.5px}
+  table{font-size:12.5px}
+  th,td{padding:7px 8px}
+  .cards,.cards3,.hists,.deltas,.steps,.toul,.srcgrid,.halves{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr;border-right:none}
+  .stat{border-right:1px solid var(--line);border-top:1px solid var(--line);border-left:none}
+  .stat:nth-child(-n+2){border-top:none}
+  .stat:last-child{grid-column:1/-1}
+  .fstats{grid-template-columns:1fr}
+  .fstat{border-left:none;border-top:1px solid var(--line)}
+  .fstat:first-child{border-top:none}
+  .pg{grid-template-columns:1fr;gap:4px}
+  .pgl{padding-top:0}
+  .popts{grid-template-columns:1fr}
+  .srow{grid-template-columns:72px 1fr;row-gap:4px}
+  .srow .snum{grid-column:2}
+  .dhead,.drow{grid-template-columns:92px 1fr 52px;gap:8px}
+  .dlab{font-size:12px}
+  .ddel{font-size:12.5px}
+  .daxis{margin-left:100px;margin-right:60px}
+  .dvhead,.dvrow{grid-template-columns:74px repeat(3,1fr);gap:6px}
+  .dvval{font-size:11px}
+  .sftrow{grid-template-columns:1fr;gap:6px}
+  .sftd{text-align:left}
+  .cmp{grid-template-columns:1fr 52px;row-gap:2px}
+  .cmp .bar{grid-column:1/-1;grid-row:2}
+  .prof{grid-template-columns:118px 1fr 92px;font-size:12px}
+  .inst .row{grid-template-columns:1fr 110px}
+  .inst .opts2{grid-template-columns:1fr}
+  .kv div{grid-template-columns:96px 1fr}
+  body{font-size:15.5px}
+  h2{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <b class="sc">Whom</b>
+  <nav>
+    <a href="#" data-todo="paper link">Paper</a>
+    <a href="https://anonymous.4open.science/r/whom-benchmark-9736/" target="_blank" rel="noopener">Data</a>
+    <a href="#play">Play</a>
+    <a href="#finding">Results</a>
+    <a href="#sources">Sources</a>
+    <a href="#bibtex">BibTeX</a>
+  </nav>
+</div></div>
+
+<header class="hero wrap">
+  <div class="kickerline">Preprint · 2026</div>
+  <h1>Whom Are You Simulating?<br>Building Individual Simulation Benchmarks<br class="deskbr"> from Naturally Occurring Conversations</h1>
+  <div class="tagline">Can AI simulate <em class="you" title="you">you</em>, or only <em class="any" title="type “anyone” anywhere on the page">anyone</em>?</div>
+  <p class="heroauthors">
+    Zhenze Mo<sup>2,*</sup>, Chance Jiajie Li<sup>1,*</sup>, Kai Hu<sup>3</sup>, Ao Qu<sup>1</sup>, Yuhan Tang<sup>1</sup>, Jie Fan<sup>1</sup>, Jiayi Wu<sup>4</sup>, Kaiya Ivy Zhao<sup>1</sup>, Jiangbo Yu<sup>5</sup>, Dingyi Zhuang<sup>1</sup>, Shenhao Wang<sup>6</sup>, Luis Alberto Alonso Pastor<sup>1</sup>, Hang Jiang<sup>1,2,7</sup>, Kent Larson<sup>1</sup>, Jinhua Zhao<sup>1</sup>
+  </p>
+  <p class="heroaffils">
+    <span><sup>1</sup>Massachusetts Institute of Technology</span> <span><sup>2</sup>Northeastern University</span> <span><sup>3</sup>South China University of Technology</span> <span><sup>4</sup>Brown University</span> <span><sup>5</sup>McGill University</span> <span><sup>6</sup>University of Florida</span> <span><sup>7</sup>Harvard University</span>
+  </p>
+  <p class="heronote">* equal contribution &nbsp;&middot;&nbsp; Correspondence to: <a href="mailto:jiajie@mit.edu">jiajie@mit.edu</a>, <a href="mailto:qua@mit.edu">qua@mit.edu</a></p>
+
+  <div class="tldrbox">
+    <p><b class="lb">tl;dr</b> Conversations online record the same people answering many situations, so they look like ready-made data for simulating individuals. But a reply mixes what <strong>anyone</strong> would say with what its <strong>author</strong> adds. <span class="sc">Whom</span> is a framework that builds individual simulation datasets and benchmarks around the <strong>individual signal</strong>: recurring patterns in a person&rsquo;s replies that distinguish them from others in the same situations. We release benchmarks on r/AmItheAsshole, Wikipedia deletion debates, and news comments.</p>
+    <p><b class="lb">Finding</b> <strong>Whose</strong> history a simulator reads matters more than <strong>whether</strong> it reads one. LLMs read a person&rsquo;s lean and little else; a model trained on <span class="sc">Whom</span> data learns to use the person&rsquo;s reasons. <a href="#finding">Results&nbsp;&darr;</a></p>
+  </div>
+  <div class="btns">
+    <a class="btn primary" href="#" data-todo="paper link">Paper</a>
+    <a class="btn" href="https://anonymous.4open.science/r/whom-benchmark-9736/" target="_blank" rel="noopener">Data</a>
+    <a class="btn" href="#play">Play</a>
+    <a class="btn" href="#use">Evaluate</a>
+    <a class="btn" href="#bibtex">BibTeX</a>
+  </div>
+</header>
+
+<div class="teaser">
+  <div class="tz" id="tz">
+    <img src="assets/teaser.jpg" alt="Four-panel illustration. Maya mostly says what anyone would say; a benchmark asks about her where her answer differs from others, requires that difference to recur, and credits the AI only when Maya's own posts beat someone else's.">
+    <div class="shade" style="left:0;width:25%"></div>
+    <div class="shade" style="left:25%;width:24.65%"></div>
+    <div class="shade" style="left:49.65%;width:24.75%"></div>
+    <div class="shade" style="left:74.4%;width:25.6%"></div>
+  </div>
+  <div class="panelcaps" id="panelcaps">
+    <div data-i="0"><span class="pcl">the crowd</span> On a snowy day everyone says &ldquo;warm coat,&rdquo; and so does Maya. An AI that knows only the crowd is right about her, and learns nothing about her.</div>
+    <div data-i="1"><b>1</b><span class="pcl">differs</span> On Main Street most people mention traffic; Maya says close it for people. Ask about her only where her answer differs from others&rsquo; on the same post.</div>
+    <div data-i="2"><b>2</b><span class="pcl">recurs</span> Her older replies argue the same way: bike lanes, parks over parking, slow cars near kids. A difference counts only if it recurs over time.</div>
+    <div data-i="3"><b>3</b><span class="pcl">credit</span> On a new post, an AI reading Maya&rsquo;s history predicts her. Any history can help, so credit Maya only with the gain over Sam&rsquo;s.</div>
+  </div>
+</div>
+
+<section class="wrap" id="question" style="margin-top:58px">
+  <div class="kicker">The question</div>
+  <p class="body">Language models are increasingly used to simulate people, from survey populations to particular individuals. For individuals, naturally occurring conversation has become the main material: it records the same people answering many situations over months. Benchmarks built from it give a simulator a person&rsquo;s earlier replies and score how well it predicts their later ones.</p>
+  <p class="body">A reply, however, records its situation as much as its author. A coat on a snowy day says little about the person wearing it, and most of a reply is what its post draws from <strong>anyone</strong> who answers. Reading <em>any</em> history moves a simulator&rsquo;s accuracy by itself, down on r/AITA and up on Wikipedia debates, so part of the usual gain is not the person&rsquo;s. That leaves open the question we address:</p>
+  <blockquote class="rq">How can we reliably turn naturally occurring conversations into individual simulation datasets and benchmarks?</blockquote>
+  <p class="body">Psychology has long drawn three distinctions between what a situation draws from everyone and what a person brings to it. Most datasets and benchmarks built from conversation draw none of them.</p>
+  <div class="cards cards3">
+    <div class="card">
+      <h3><span class="num">1</span>Shared vs. distinctive</h3>
+      <div class="csub">Mischel &amp; Shoda 1995 · Furr 2008</div>
+      <p>Most of a reply is what its post draws from anyone. What its author adds shows only where others answer differently. <span class="sc">Whom</span> asks about a person only where co-respondents disagree.</p>
+    </div>
+    <div class="card">
+      <h3><span class="num">2</span>One-off vs. recurring</h3>
+      <div class="csub">Epstein 1979</div>
+      <p>A single difference may be a passing reaction. It belongs to the person only if it recurs. <span class="sc">Whom</span> keeps the people, and the parts of a reply, in which the difference recurs.</p>
+    </div>
+    <div class="card">
+      <h3><span class="num">3</span>People in general vs. this person</h3>
+      <div class="csub">Cronbach 1955</div>
+      <p>A simulator that knows how people in general answer can look accurate about everyone. <span class="sc">Whom</span> credits a gain to the person only when their own history beats someone else&rsquo;s.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="framework">
+  <div class="kicker">The framework</div>
+  <h2>The individual signal: what knowing who wrote a reply adds beyond its situation.</h2>
+  <p class="body">Let <i>X</i> be a situation, <i>U</i> the person who replies, and <i>Y</i> the category of one part of the reply, such as the position it takes or the reason it gives. The uncertainty in <i>Y</i> splits in three. Hover a term; the bars further down use the same colors.</p>
+  <div class="eqbox">
+    <div class="eq">
+      <span class="eqt" data-k="all"><span><i>H</i>(<i>Y</i>)</span><small>a later reply</small></span><span class="op">=</span>
+      <span class="eqt" data-k="sit"><span><i>I</i>(<i>X</i>;<i>Y</i>)</span><small>the situation</small></span><span class="op">+</span>
+      <span class="eqt" data-k="per"><span><i>I</i>(<i>U</i>;<i>Y</i> | <i>X</i>)</span><small>the individual signal</small></span><span class="op">+</span>
+      <span class="eqt" data-k="rest"><span><i>H</i>(<i>Y</i> | <i>X</i>,<i>U</i>)</span><small>the rest</small></span>
+    </div>
+    <p class="eqnote" id="eqnote">We know <i>U</i> through the person&rsquo;s <strong>history</strong> of earlier replies and take <i>Y</i> from their <strong>held-out</strong> later replies.</p>
+  </div>
+  <p class="body" style="margin-top:16px">Conditioning on <i>X</i> makes the signal <strong>distinctive</strong>: it counts only what sets a person apart from the co-respondents, the others who answered the same situation. Taking <i>Y</i> from later replies makes it <strong>stable</strong>: only a difference that recurs from earlier to later replies survives the split. The answer a person&rsquo;s history favors more than others do is their <strong>characteristic answer</strong>.</p>
+
+  <h3 class="sub">How a benchmark measures it</h3>
+  <p class="body">A benchmark credits a simulator with the person only if it removes what any respondent or any history would supply. It asks about situations on which co-respondents answer differently, and it gives the simulator three histories of the same size.</p>
+  <div class="hists">
+    <div class="hcard own"><div class="hh"><span class="ico own">U</span>The person&rsquo;s own</div>12 earlier post&ndash;reply pairs, about 5,800 words: <i>h<sub>u</sub></i>.</div>
+    <div class="hcard other"><div class="hh"><span class="ico other"><svg class="swi" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h11M10 2l3 3-3 3M14 11H3M6 8l-3 3 3 3"/></svg></span>Someone else&rsquo;s</div>The paired person&rsquo;s history, chosen to contrast most with the person&rsquo;s own: <i>h<sub>u&prime;</sub></i>.</div>
+    <div class="hcard"><div class="hh"><span class="ico none">&empty;</span>None</div>The post alone. What a simulator knows about how people in general answer.</div>
+  </div>
+  <div class="deltas">
+    <div class="delta main"><b>&Delta;<sub>match</sub> = S<sup>own</sup> &minus; S<sup>other</sup></b>The gain credited to the person. The two histories differ only in whose replies they hold.</div>
+    <div class="delta"><b>&Delta;<sub>add</sub> = S<sup>own</sup> &minus; S<sup>none</sup></b>Adds to &Delta;<sub>match</sub> the effect of reading <em>any</em> history.</div>
+    <div class="delta"><b>Recovery = S<sup>own</sup> / counting rule</b>Reads a simulator against what the labels alone predict.</div>
+  </div>
+
+  <h3 class="sub">Three steps, one per distinction</h3>
+  <div class="steps">
+    <div class="step"><div class="sh">1 · Set what is distinctive</div>Ask about a person only on posts where co-respondents disagree, and only about parts of a reply that everyone&rsquo;s replies share as categories.</div>
+    <div class="step"><div class="sh">2 · Keep what recurs</div>Split every record at one time cut. Keep people whose two halves of history agree on their characteristic answer, a split-half test of internal consistency.</div>
+    <div class="step"><div class="sh">3 · Credit only the person</div>Score each question with the person&rsquo;s own history, someone else&rsquo;s, and none. Count &Delta;<sub>match</sub> only when it holds across people (sign and Wilcoxon tests).</div>
+  </div>
+  <div class="pipefig" id="pipefig"><img src="assets/pipeline.jpg" alt="The r/AITA instance of WHOM: replies split at one time cut; eligible people; histories and test cases; three inputs; and a task instance asking for verdict, warrant, and evidence."></div>
+  <p class="figcap">The r/AITA instance of <span class="sc">Whom</span>. Left: replies are split at one time cut, people are kept whose difference from their co-respondents recurs, and later replies on posts where co-respondents disagree become test cases. Right: a test case asks for the verdict, warrant, and evidence of a later reply the simulator does not see. Click to enlarge.</p>
+</section>
+
+<section class="wrap" id="data">
+  <div class="kicker">The r/AITA dataset</div>
+  <h2>Each reply is coded into its verdict, its evidence, and its warrant.</h2>
+  <p class="body">On <em>Am I the Asshole?</em>, many commenters judge the same post, every commenter reads the whole conflict, they often split, and they come back for months. Following Toulmin&rsquo;s model of an argument, the <strong>claim</strong> of a reply is its verdict (NTA or YTA), its <strong>evidence</strong> is the part of the post it relies on, and its <strong>warrant</strong> is the principle that connects the two. Replies that share a verdict and the evidence can still differ in the warrant, which is where a person&rsquo;s reasons show.</p>
+  <div class="toul" id="toul">
+    <div class="tpost">
+      <div class="tlabel">r/AmItheAsshole · post</div>
+      <div class="tt">AITA for not letting my brother&rsquo;s dog visit again?</div>
+      My brother brought his dog to my apartment. <span class="hlg k-grounds" data-k="grounds">The dog cornered my anxious cat and barked.</span> <span class="hlg k-grounds" data-k="grounds">She stopped eating; the vet noted stress.</span> I asked him not to bring the dog back for now.
+    </div>
+    <div>
+      <div class="trep"><div class="who">user1</div><span class="hlg k-claim" data-k="claim">NTA.</span> <span class="hlg k-grounds" data-k="grounds">The dog left your cat distressed.</span> <span class="hlg k-warrant" data-k="warrant">Protecting your cat&rsquo;s well-being comes first.</span><br><span class="wtag" data-k="warrant">WARRANT · Care/Harm Prevention</span></div>
+      <div class="trep"><div class="who">user2</div><span class="hlg k-claim" data-k="claim">NTA.</span> <span class="hlg k-grounds" data-k="grounds">The dog stressed your cat.</span> <span class="hlg k-warrant" data-k="warrant">It&rsquo;s your home; you decide which animals visit.</span><br><span class="wtag" data-k="warrant">WARRANT · Autonomy/Boundaries</span></div>
+    </div>
+  </div>
+  <div class="tlegend" id="tlegend">
+    <span data-k="claim"><i class="sw" style="background:#fbe1e1"></i>Claim &rarr; verdict</span>
+    <span data-k="grounds"><i class="sw" style="background:#fbf1c9"></i>Grounds &rarr; evidence (post detail)</span>
+    <span data-k="warrant"><i class="sw" style="background:#fde3cf"></i>Warrant &rarr; principle</span>
+  </div>
+  <p class="note" style="margin-top:8px">Two replies share the verdict and the evidence and differ in the warrant. The example is illustrative (Figure 3 of the paper).</p>
+
+  <h3 class="sub">Ten principles</h3>
+  <p class="body">Four principles are foundations of Moral Foundations Theory; the other six are obligations that r/AITA replies invoke. Hover one for its definition.</p>
+  <div class="pgroups" id="pgroups"></div>
+  <div class="pdef" id="pdef"><b>Autonomy/Boundaries.</b> The judgment is justified by violation of personal sovereignty: controlling behavior, unwanted interference, privacy invasion, or boundary crossing. Individuals have the right to make personal choices and maintain personal boundaries.</div>
+  <p class="note">Three models from different families label each warrant; the label is the principle at least two choose. Two trained annotators agree on 94.6% of 112 replies (Gwet&rsquo;s AC1 0.94). In a study with 44 participants, 78.6% of 103 self-coded explanations were rated as captured well by their principle, and on those the models&rsquo; majority label matches the participant&rsquo;s code 77.1% of the time.</p>
+
+  <div class="stats">
+    <div class="stat"><b>183,783</b> r/AITA replies by 2,428 commenters</div>
+    <div class="stat"><b>30,601</b> posts, split at one time cut (2026-02-28)</div>
+    <div class="stat"><b>100</b> people per question type, kept because their difference recurs</div>
+    <div class="stat"><b>8,471</b> benchmark items over 7 question types</div>
+    <div class="stat"><b>3</b> sources: r/AITA, Wikipedia AfD, SOCC news comments</div>
+  </div>
+
+  <h3 class="sub" id="signal">Where the signal lives</h3>
+  <p class="body">The signal is a property of the replies, so <span class="sc">Whom</span> measures it from labels alone, before any LLM is run. On r/AITA the post explains 29% of a verdict&rsquo;s uncertainty and the person adds 8.0%; on the warrant the person adds 0.8% over all items and 7.9% on the characteristic items, so the item rules keep the replies in which the signal is concentrated. The evidence barely moves: the post fixes it. Someone else&rsquo;s labels in place of the person&rsquo;s make the prediction worse.</p>
+  <div class="tabrow">
+    <div class="tabs" id="sigsrc"><button class="on" data-s="aita">r/AITA</button><button data-s="afd">Wikipedia AfD</button><button data-s="socc">SOCC</button></div>
+    <div class="tabs" id="sigset"><button class="on" data-s="all">All items</button><button data-s="ch">Characteristic items</button></div>
+  </div>
+  <div class="sig" id="sig"></div>
+  <p class="tnote">Shares of <i>H</i>(<i>Y</i>) (%) explained by the post (Situation) and added by the person&rsquo;s early labels (Person), estimated as usable information; the rest is unexplained. Tables 7 and 21 of the paper.</p>
+</section>
+
+<div class="quiz" id="play">
+  <div class="wrap">
+    <div class="kicker">Try it yourself · 1</div>
+    <h2>Be the simulator</h2>
+    <p class="body">Two real r/AITA commenters, two later replies each. Guess which principle each reply rests on: first from the post alone, then with the person&rsquo;s 12 earlier replies. You can also swap in someone else&rsquo;s history and see where it takes you. Posts and replies are paraphrased; the answers are the real labels. On the 769 warrant items, LLMs score 50&ndash;59% with no history and 54&ndash;63% with the person&rsquo;s own.</p>
+    <div class="qcard" id="g1"></div>
+    <div class="score" id="g1score"></div>
+  </div>
+</div>
+
+<section class="wrap" id="finding">
+  <div class="kicker">The finding</div>
+  <h2>Whose history a simulator reads matters more than whether it reads one.</h2>
+  <p class="body">Every LLM answers each question with no history, someone else&rsquo;s, and the person&rsquo;s own. With someone else&rsquo;s history in place of none, the LLMs answer <strong>less</strong> accurately in eleven of the twelve LLM-by-part cells on verdicts and warrants, by up to 11.5 points. A gain over no history (&Delta;<sub>add</sub>) therefore understates the person&rsquo;s gain, and misses it in three cells where &Delta;<sub>match</sub> is significant. Watch the blue dot sit left of the hollow one.</p>
+  <div class="tabs" id="dtabs"><button class="on" data-p="verdict">Verdict</button><button data-p="warrant">Warrant</button><button data-p="evidence">Evidence</button></div>
+  <div class="dumb" id="dumb"></div>
+  <div class="dlegend">
+    <span><i style="background:#fff;border:2px solid var(--none)"></i>No history</span>
+    <span><i style="background:var(--other)"></i>Someone else&rsquo;s history</span>
+    <span><i style="background:var(--own)"></i>Own history</span>
+    <span><b class="ln" style="border-left:2px solid var(--ink)"></b>Counting rule (labels only, no LLM)</span>
+    <span><b class="ln" style="border-left:1.5px dashed #8e8c86"></b>Global majority</span>
+    <span><b class="ln" style="border-left:1.5px dotted #c5c3bd"></b>Chance</span>
+  </div>
+  <p class="tnote">Accuracy (%) on the r/AITA benchmark: 1,352 verdict, 769 warrant, and 554 evidence items, 12 earlier replies per history. &Delta;<sub>match</sub> in points; &dagger;: positive and significant under sign and Wilcoxon tests over people (<i>p</i> &lt; .05). Hover a row for the values. Tables 2, 6, and 20.</p>
+
+  <h3 class="sub">Common practice cannot tell one person from another</h3>
+  <p class="body">Common practice collects replies, groups them by commenter, and uses them as they are. Built that way at the same scale, the person&rsquo;s own history never gains significantly over no history on verdicts and warrants, and only Qwen3-32B separates the person from someone else, on verdicts by 4.1 points. On the benchmark <span class="sc">Whom</span> builds, both LLMs gain significantly over someone else&rsquo;s history on verdicts and warrants. A person becomes visible only where the benchmark asks about a difference that recurs.</p>
+  <div class="tabs" id="cptabs"><button class="on" data-c="cp">Common practice</button><button data-c="whom">Built with <span class="sc">Whom</span></button></div>
+  <div class="dvwrap" id="dv"></div>
+  <p class="tnote">&Delta;<sub>match</sub> (points), own minus someone else&rsquo;s history; &dagger; as above. Table 1.</p>
+
+  <h3 class="sub">LLMs read a person&rsquo;s lean and little else</h3>
+  <p class="body">With no history, the LLMs already reach 77&ndash;91% of the counting rule&rsquo;s accuracy on verdicts: the post fixes most of the answer. With the person&rsquo;s own history they recover 83&ndash;96% of what the labels predict on verdicts but only 70&ndash;82% on warrants. State the person&rsquo;s own verdict in the question, and their history adds nothing significant on warrants. The records do hold the reasons:</p>
+  <div class="fstats">
+    <div class="fstat"><b>73.8% vs. 38.3%</b>Counting rule naming the warrant from the person&rsquo;s early replies and the later verdict, vs. the most common principle.</div>
+    <div class="fstat"><b>+7.1 to +32.4</b>Own over someone else&rsquo;s history on the verdicts that follow the person&rsquo;s lean; on those that depart from it, own history is worse by 3.7 to 23.3.</div>
+    <div class="fstat"><b>12 = 24 = 36</b>Reading 24 or 36 replies (about 17,000 words) does no better than 12 on any part.</div>
+  </div>
+
+  <h3 class="sub">Data built around the signal teaches a model the reasons</h3>
+  <p class="body">We fine-tune Qwen3-8B with LoRA on the first 70% in time of the later replies of 100 people, in three versions: on all of these replies, on the ones that give the person&rsquo;s characteristic answer (the <span class="sc">Whom</span> selection), or on as many drawn at random, and test on items that no version was trained on. Only the <span class="sc">Whom</span> selection teaches the model to use a person&rsquo;s reasons: accuracy on warrants with the person&rsquo;s own history rises from 47.4 to 70.0%. The model then follows the history it reads closely, so someone else&rsquo;s history drags it down to 16.3%.</p>
+  <div class="tabs" id="sfttabs"><button data-p="verdict">Verdict</button><button class="on" data-p="warrant">Warrant</button><button data-p="evidence">Evidence</button></div>
+  <div class="sft" id="sft"></div>
+  <p class="tnote">Accuracy (%) of Qwen3-8B on the test items with no history, someone else&rsquo;s, and the person&rsquo;s own (12 earlier replies), as per-person means; &Delta;<sub>match</sub> and &Delta;<sub>add</sub> in points, &dagger; as above. Tables 3 and 16.</p>
+</section>
+
+<div class="quiz" id="play2">
+  <div class="wrap">
+    <div class="kicker">Try it yourself · 2</div>
+    <h2>Which reason is yours?</h2>
+    <p class="body">Now you are the person. Ten short conflicts, four reasons each; pick the one that matters most to you. Every principle is offered equally often, so someone with no pattern would land near 10% on each. At the end, <span class="sc">Whom</span> reads your characteristic answer and runs its split-half check on you. Nothing leaves your browser.</p>
+    <div class="qcard" id="g2"></div>
+  </div>
+</div>
+
+<section class="wrap" id="sources">
+  <div class="kicker">Three sources</div>
+  <h2>The construction carries over, and the labels tell in advance where it will work.</h2>
+  <p class="body">A source supports individual simulation only if several people answer each situation, all of them see the same situation, their answers differ, and the same people return over time. Wikipedia deletion debates and SOCC news comments meet these requirements and change what a reply is and where a person&rsquo;s difference comes from. On all three, the signal lies in people&rsquo;s positions and reasons.</p>
+  <div class="tabs" id="srctabs"><button class="on" data-s="aita">r/AITA</button><button data-s="afd">Wikipedia AfD</button><button data-s="socc">SOCC</button></div>
+  <div id="srcpanel"></div>
+</section>
+
+<section class="wrap" id="use">
+  <div class="kicker">Use it</div>
+  <h2>Evaluate your simulator</h2>
+  <p class="body">Each benchmark file is JSONL, one item per line: <code>{"id", "person", "messages", "answer"}</code>. <code>messages</code> is the request with the person&rsquo;s own history, exactly as it was sent; <code>person</code> is a pseudonym consistent within a source; <code>answer</code> is the correct letter in the request&rsquo;s option order.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>File</th><th class="l">Question</th><th>Items</th><th>People</th></tr></thead>
+      <tbody>
+        <tr><td>aita_verdict.jsonl</td><td class="l">r/AITA verdict (NTA / YTA)</td><td>1,352</td><td>100</td></tr>
+        <tr><td>aita_warrant.jsonl</td><td class="l">r/AITA principle of the reply (4 options)</td><td>769</td><td>100</td></tr>
+        <tr><td>aita_evidence.jsonl</td><td class="l">r/AITA part of the post the reply relies on (4 options)</td><td>554</td><td>100</td></tr>
+        <tr><td>afd_vote.jsonl</td><td class="l">Wikipedia AfD: the editor&rsquo;s vote (4 options)</td><td>1,500</td><td>100</td></tr>
+        <tr><td>afd_ground.jsonl</td><td class="l">Wikipedia AfD: policy ground of the vote (12 options)</td><td>1,708</td><td>50</td></tr>
+        <tr><td>socc_claim.jsonl</td><td class="l">SOCC: the article claim a comment engages</td><td>1,375</td><td>100</td></tr>
+        <tr><td>socc_stance.jsonl</td><td class="l">SOCC: accepts / rejects / qualifies</td><td>1,213</td><td>100</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <pre id="code1"><button class="copy" data-for="code1">copy</button>import json
+from collections import defaultdict
+
+items = [json.loads(l) for l in open("aita_warrant.jsonl")]
+
+def score(items, predict):
+    # accuracy within each person, then averaged over people with at least 3 items;
+    # an unanswered item counts as wrong
+    per = defaultdict(list)
+    for it in items:
+        per[it["person"]].append(predict(it["messages"]) == it["answer"])
+    accs = [sum(v) / len(v) for v in per.values() if len(v) &gt;= 3]
+    return 100 * sum(accs) / len(accs)</pre>
+  <p class="body" style="margin-top:16px">Run three conditions and report &Delta;<sub>match</sub> = own &minus; someone else&rsquo;s. <strong>Own</strong>: the file as released. <strong>Someone else&rsquo;s</strong>: replace the history block with another person&rsquo;s from the same file, cut to the same length. <strong>None</strong>: remove the history block and use the no-history request given in the paper&rsquo;s appendix. Count a gain only when it holds across people.</p>
+  <p class="note">The files are for research on evaluating and training simulators of individuals. Do not try to re-identify the people behind them, and do not use the benchmarks to make decisions about them. Usernames, links, signatures, and e-mail addresses are replaced with placeholders. The texts come from public sources (Reddit r/AmItheAsshole, Wikipedia Articles for Deletion under CC BY-SA, and the SOCC corpus) and remain under their original terms. The examples on this page are paraphrased.</p>
+</section>
+
+<section class="wrap" id="bibtex">
+  <div class="kicker">Citation</div>
+  <pre id="bib"><button class="copy" data-for="bib">copy</button>@misc{mo2026whom,
+  title  = {Whom Are You Simulating? Building Individual Simulation
+            Benchmarks from Naturally Occurring Conversations},
+  author = {Mo, Zhenze and Li, Chance Jiajie and Hu, Kai and Qu, Ao
+            and Tang, Yuhan and Fan, Jie and Wu, Jiayi and Zhao, Kaiya Ivy
+            and Yu, Jiangbo and Zhuang, Dingyi and Wang, Shenhao
+            and Alonso Pastor, Luis Alberto and Jiang, Hang
+            and Larson, Kent and Zhao, Jinhua},
+  year   = {2026}
+}</pre>
+</section>
+
+<footer><div class="wrap">
+  <span><span class="sc">Whom</span> · 2026</span>
+  <span>Examples paraphrased · no usernames</span>
+</div></footer>
+
+<div class="lightbox" id="lightbox"><img src="assets/pipeline.jpg" alt=""></div>
+
+<script>
+/* ---------- shared data ---------- */
+var PR = {
+  "Care/Harm Prevention":"The judgment is justified by concern about direct physical or emotional suffering of a person. Moral weight is placed on preventing or alleviating direct suffering, distress, humiliation, or trauma.",
+  "Safety/Risk Management":"The judgment is justified by risk-taking, danger creation, or failure to follow safety precautions, even if no harm occurred. Risk itself is morally salient; people have obligations to prevent foreseeable harm.",
+  "Fairness/Reciprocity":"The judgment is justified by proportionality, equity, or reciprocal treatment. People should share burdens and benefits fairly and treat others as they themselves are treated.",
+  "Autonomy/Boundaries":"The judgment is justified by violation of personal sovereignty: controlling behavior, unwanted interference, privacy invasion, or boundary crossing. Individuals have the right to make personal choices and maintain personal boundaries.",
+  "Property/Consent":"The judgment is justified by violations involving ownership, money, physical possessions, or bodily access without permission. People have rights over their possessions, finances, and bodily access; consent is required.",
+  "Honesty/Communication":"The judgment is justified by deception, withholding key information, dishonesty, or failure of transparent communication. Truthfulness and transparent communication are morally required for trust and informed decisions.",
+  "Role-based Responsibility":"The judgment is justified by duties tied to a specific functional role (tenant, roommate, employee, co-parent) rather than emotion-based loyalty. Roles carry non-emotional obligations; failure to meet them justifies moral blame or praise.",
+  "Relational Loyalty":"The judgment is justified by betrayal of trust or failure to stand by an in-group member (family, partner, close friend). Close relationships impose loyalty expectations; betrayal is morally salient.",
+  "Authority/Hierarchy":"The judgment is justified by respect or disrespect toward legitimate authority or hierarchical roles (boss, parent, teacher, official leader). Legitimate authority deserves deference; undermining it is morally relevant.",
+  "Tradition/Social Conventions":"The judgment is justified by violating widely shared social conventions, etiquette, or coordination norms. Shared norms enable coordination and mutual respect; violating them is morally salient when no more specific principle dominates."
+};
+var SHORT = {
+  "Care/Harm Prevention":"suffering, distress, humiliation of a person",
+  "Safety/Risk Management":"risk-taking or ignored precautions",
+  "Fairness/Reciprocity":"fair shares, equal treatment",
+  "Autonomy/Boundaries":"personal choices, privacy, boundaries",
+  "Property/Consent":"possessions, money, permission",
+  "Honesty/Communication":"deception or withheld information",
+  "Role-based Responsibility":"duties of a role (parent, tenant, employee)",
+  "Relational Loyalty":"standing by family, partner, friends",
+  "Authority/Hierarchy":"deference to legitimate authority",
+  "Tradition/Social Conventions":"etiquette and shared norms"
+};
+/* Table 8: share of each principle among the 1,914 later replies of the 100 warrant people, and people whose items include it */
+var REDDIT = {"Autonomy/Boundaries":[28.2,48],"Care/Harm Prevention":[18.4,44],"Fairness/Reciprocity":[17.8,31],"Role-based Responsibility":[9.7,30],"Tradition/Social Conventions":[8.0,24],"Property/Consent":[7.8,19],"Safety/Risk Management":[4.3,13],"Honesty/Communication":[2.6,9],"Relational Loyalty":[2.6,10],"Authority/Hierarchy":[0.7,2]};
+var SWAP='<svg class="swi" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h11M10 2l3 3-3 3M14 11H3M6 8l-3 3 3 3"/></svg>';
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function toast(msg,warm){var n=document.createElement("div");n.className="toast"+(warm?" warm":"");n.textContent=msg;document.body.appendChild(n);setTimeout(function(){n.remove();},2600);return n;}
+function tabs(id,cb){var el=document.getElementById(id);el.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;el.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});cb(b.dataset);});}
+
+/* ---------- teaser hover ---------- */
+(function(){
+  var caps=document.querySelectorAll("#panelcaps>div"), shades=document.querySelectorAll("#tz .shade"), img=document.querySelector("#tz img");
+  function hl(i){caps.forEach(function(c,j){c.classList.toggle("hl",j===i);});shades.forEach(function(s,j){s.classList.toggle("hl",j===i);});}
+  caps.forEach(function(c,i){c.addEventListener("mouseenter",function(){hl(i);});c.addEventListener("mouseleave",function(){hl(-1);});});
+  img.addEventListener("mousemove",function(e){var r=img.getBoundingClientRect(),x=(e.clientX-r.left)/r.width;hl(x<.25?0:x<.4965?1:x<.744?2:3);});
+  img.addEventListener("mouseleave",function(){hl(-1);});
+})();
+
+/* ---------- toulmin legend ---------- */
+(function(){
+  var box=document.getElementById("toul"), leg=document.getElementById("tlegend");
+  function focus(k){
+    leg.querySelectorAll("span").forEach(function(s){s.classList.toggle("on",s.dataset.k===k);});
+    if(!k){box.classList.remove("dimmed");return;}
+    box.classList.add("dimmed");
+    box.querySelectorAll(".hlg,.wtag").forEach(function(x){x.classList.toggle("focus",x.dataset.k===k);});
+  }
+  leg.querySelectorAll("span").forEach(function(s){s.addEventListener("mouseenter",function(){focus(s.dataset.k);});s.addEventListener("mouseleave",function(){focus(null);});s.addEventListener("click",function(){focus(s.classList.contains("on")?null:s.dataset.k);});});
+})();
+
+/* ---------- principles ---------- */
+(function(){
+  var groups=[["Foundations (Moral Foundations Theory)",["Care/Harm Prevention","Fairness/Reciprocity","Relational Loyalty","Authority/Hierarchy"]],["Individual sovereignty",["Autonomy/Boundaries","Safety/Risk Management","Property/Consent"]],["Social and professional contracts",["Honesty/Communication","Tradition/Social Conventions","Role-based Responsibility"]]];
+  var html="";groups.forEach(function(g){html+='<div class="pg"><div class="pgl">'+g[0]+'</div><div class="pchips">'+g[1].map(function(p){return '<span class="pchip" tabindex="0" data-p="'+p+'">'+p+'</span>';}).join("")+'</div></div>';});
+  var el=document.getElementById("pgroups");el.innerHTML=html;
+  var def=document.getElementById("pdef");
+  function show(p){def.innerHTML="<b>"+p+".</b> "+PR[p]+' <span style="color:var(--mut)">r/AITA: '+REDDIT[p][0]+'% of the 1,914 later replies of the 100 warrant people.</span>';}
+  el.addEventListener("mouseover",function(e){var c=e.target.closest(".pchip");if(c)show(c.dataset.p);});
+  el.addEventListener("focusin",function(e){var c=e.target.closest(".pchip");if(c)show(c.dataset.p);});
+  show("Autonomy/Boundaries");
+})();
+
+/* ---------- signal decomposition (Tables 7, 21) ---------- */
+(function(){
+  var D={
+    aita:[["Verdict","NTA / YTA",29.3,8.0,32.1,-45.4],["Warrant","10 principles",23.8,0.8,7.9,-1.9],["Evidence","4 parts of post",5.8,0.1,1.9,0.0]],
+    afd:[["Vote","keep, delete, …",13.9,38.0,41.9,-91.7],["Ground","12 policy grounds",5.9,7.5,35.2,-8.6]],
+    socc:[["Claim","article claims",16.8,0.0,2.0,-0.1],["Stance","accept, reject, qualify",-1.7,2.4,2.4,-4.4]]
+  };
+  var src="aita", set="all", el=document.getElementById("sig");
+  function f(v){return (v>0?"":"")+v.toFixed(1);}
+  function render(){
+    var html="";
+    D[src].forEach(function(r){
+      var per=set==="all"?r[3]:r[4], sit=Math.max(0,r[2]);
+      html+='<div class="srow"><div class="slab">'+r[0]+'<small>'+r[1]+'</small></div><div class="strack"><div class="seg sit" style="width:'+sit+'%"></div><div class="seg per" style="width:'+per+'%"></div></div><div class="snum">post <b style="color:var(--ink2)">'+f(r[2])+'%</b> · person <b>'+f(per)+'%</b><br><span class="neg">someone else&rsquo;s labels: '+f(r[5])+'%</span></div></div>';
+    });
+    html+='<div class="slegend"><span><i class="sw" style="background:var(--sit)"></i>explained by the post</span><span><i class="sw" style="background:var(--own)"></i>added by the person</span><span><i class="sw" style="background:#f4f3f0;border:1px solid #e3e1dc"></i>the rest</span></div>';
+    el.innerHTML=html;
+  }
+  tabs("sigsrc",function(d){src=d.s;render();});
+  tabs("sigset",function(d){set=d.s;render();});
+  render();
+  var note=document.getElementById("eqnote"), base=note.innerHTML, EXP={
+    all:"<b><i>H</i>(<i>Y</i>)</b>: the uncertainty in one part of a later reply, such as its verdict or its warrant.",
+    sit:"<b><i>I</i>(<i>X</i>;<i>Y</i>)</b>: what the situation tells about the reply, the part shared by anyone who answers it.",
+    per:"<b><i>I</i>(<i>U</i>;<i>Y</i> | <i>X</i>)</b>: the person-specific predictive information that knowing the person adds given the situation. It cannot exceed <i>H</i>(<i>Y</i> | <i>X</i>), so a post everyone answers alike leaves no room for the person.",
+    rest:"<b><i>H</i>(<i>Y</i> | <i>X</i>,<i>U</i>)</b>: what neither the situation nor the person predicts, such as the noise of one occasion."};
+  document.querySelectorAll(".eqt").forEach(function(t){
+    t.addEventListener("mouseleave",function(){note.innerHTML=base;});
+    t.addEventListener("mouseenter",function(){var k=t.dataset.k;note.innerHTML=EXP[k];el.querySelectorAll(".strack").forEach(function(s){s.classList.toggle("hl-sit",k==="sit");s.classList.toggle("hl-per",k==="per");});});
+    t.addEventListener("mouseleave",function(){el.querySelectorAll(".strack").forEach(function(s){s.classList.remove("hl-sit","hl-per");});});
+  });
+})();
+
+/* ---------- dumbbell (Table 2; delta from Tables 6, 20) ---------- */
+var T2={
+  verdict:{dom:[48,86],ticks:[50,60,70,80],chance:50,maj:66.3,cnt:82.4,rows:[["GPT-6.1-sol",74.7,65.5,79.0,"+13.5",1],["GPT-6-luna",69.8,64.4,73.8,"+9.4",1],["Grok-4.7",69.8,61.4,76.1,"+14.7",1],["Claude-Sonnet-5",70.4,68.4,72.3,"+3.9",1],["Qwen3-32B",64.3,55.1,68.7,"+13.6",1],["Qwen3-14B",63.1,52.7,70.5,"+17.8",1]]},
+  warrant:{dom:[22,80],ticks:[25,40,55,70],chance:25,maj:38.3,cnt:76.9,rows:[["GPT-6.1-sol",59.1,49.3,63.3,"+14.0",1],["GPT-6-luna",54.2,47.0,59.4,"+12.4",1],["Grok-4.7",55.2,43.7,61.3,"+17.6",1],["Claude-Sonnet-5",53.2,48.8,58.9,"+10.1",1],["Qwen3-32B",51.4,47.4,54.1,"+6.7",1],["Qwen3-14B",50.3,50.4,55.8,"+5.4",1]]},
+  evidence:{dom:[22,56],ticks:[25,35,45,55],chance:25,maj:29.8,cnt:100.0,rows:[["GPT-6.1-sol",50.3,45.0,50.4,"+5.3",0],["GPT-6-luna",44.7,46.0,47.2,"+1.3",0],["Grok-4.7",46.5,44.2,46.3,"+2.1",0],["Claude-Sonnet-5",48.0,48.9,49.6,"+0.8",0],["Qwen3-32B",41.7,42.1,44.3,"+2.2",0],["Qwen3-14B",38.0,42.1,41.8,"−0.3",0]]}
+};
+(function(){
+  var el=document.getElementById("dumb"), part="verdict";
+  var html='<div class="dhead"><span>LLM</span><span>accuracy (%)</span><span>&Delta;<sub>match</sub></span></div>';
+  for(var i=0;i<6;i++){
+    if(i===0)html+='<div class="dgrp">Closed-source</div>';
+    if(i===4)html+='<div class="dgrp">Open-source</div>';
+    html+='<div class="drow" data-i="'+i+'"><div class="dlab"></div><div class="dtrack"><div class="base"></div><div class="ref chance"></div><div class="ref maj"></div><div class="ref cnt"></div><div class="dseg"></div><div class="dot none"><span class="v"></span></div><div class="dot other"><span class="v"></span></div><div class="dot own"><span class="v"></span></div></div><div class="ddel"></div></div>';
+  }
+  html+='<div class="daxis"></div>';
+  el.innerHTML=html;
+  function pos(v,d){return Math.max(0,Math.min(100,(v-d[0])/(d[1]-d[0])*100));}
+  function render(){
+    var T=T2[part], d=T.dom;
+    el.querySelectorAll(".drow").forEach(function(row){
+      var r=T.rows[+row.dataset.i];
+      row.querySelector(".dlab").textContent=r[0];
+      var n=pos(r[1],d),o=pos(r[2],d),w=pos(r[3],d);
+      row.querySelector(".dot.none").style.left=n+"%";row.querySelector(".dot.none .v").textContent="none "+r[1].toFixed(1);
+      row.querySelector(".dot.other").style.left=o+"%";row.querySelector(".dot.other .v").textContent="other "+r[2].toFixed(1);
+      row.querySelector(".dot.own").style.left=w+"%";row.querySelector(".dot.own .v").textContent="own "+r[3].toFixed(1);
+      var a=Math.min(o,w),b=Math.max(o,w);var sg=row.querySelector(".dseg");sg.style.left=a+"%";sg.style.width=(b-a)+"%";
+      // stagger labels so they do not collide
+      row.querySelector(".dot.none .v").style.bottom=(Math.abs(n-o)<9||Math.abs(n-w)<9)?"-17px":"15px";
+      row.querySelector(".ref.chance").style.left=pos(T.chance,d)+"%";
+      row.querySelector(".ref.maj").style.left=pos(T.maj,d)+"%";
+      var off=T.cnt>d[1];row.querySelector(".ref.cnt").style.display=off?"none":"block";row.querySelector(".ref.cnt").style.left=pos(T.cnt,d)+"%";
+      var dd=row.querySelector(".ddel");dd.innerHTML=r[4]+(r[5]?"<sup>&dagger;</sup>":"");dd.classList.toggle("ns",!r[5]);
+    });
+    el.querySelector(".daxis").innerHTML=T.ticks.map(function(t){return '<span style="left:'+pos(t,d)+'%">'+t+'</span>';}).join("")+'<span style="left:'+pos(T.maj,d)+'%;top:-2px;color:#8e8c86">&#9650;</span>'+(T.cnt<=d[1]?'<span style="left:'+pos(T.cnt,d)+'%;top:-2px;color:var(--ink)">&#9650;</span>':'<span style="left:auto;right:0;transform:none;color:var(--ink)">counting rule 100.0 (by construction) &rarr;</span>');
+  }
+  el.addEventListener("click",function(e){var r=e.target.closest(".drow");if(r)r.classList.toggle("show");});
+  tabs("dtabs",function(d){part=d.p;render();});
+  render();
+})();
+
+/* ---------- common practice vs WHOM (Table 1) ---------- */
+(function(){
+  var D={cp:[["Qwen3-32B",[4.1,1],[-0.9,0],[-0.2,0]],["GPT-6-luna",[2.1,0],[2.0,0],[0.4,0]]],
+         whom:[["Qwen3-32B",[13.6,1],[6.7,1],[2.2,0]],["GPT-6-luna",[9.4,1],[12.4,1],[1.3,0]]]};
+  var el=document.getElementById("dv"), mode="cp", dom=[-5,16];
+  var html='<div class="dvhead"><span></span><span>Verdict</span><span>Warrant</span><span>Evidence</span></div>';
+  for(var i=0;i<2;i++){html+='<div class="dvrow" data-i="'+i+'"><div class="dlab"></div>';for(var j=0;j<3;j++)html+='<div class="dvcell" data-j="'+j+'"><div class="dvzero"></div><div class="dvbar"></div><span class="dvval"></span></div>';html+='</div>';}
+  el.innerHTML=html;
+  function p(v){return (v-dom[0])/(dom[1]-dom[0])*100;}
+  function render(){
+    el.querySelectorAll(".dvrow").forEach(function(row){
+      var r=D[mode][+row.dataset.i];row.querySelector(".dlab").textContent=r[0];
+      row.querySelectorAll(".dvcell").forEach(function(c){
+        var v=r[1+(+c.dataset.j)][0], s=r[1+(+c.dataset.j)][1], z=p(0), x=p(v);
+        c.querySelector(".dvzero").style.left=z+"%";
+        var b=c.querySelector(".dvbar");b.style.left=Math.min(z,x)+"%";b.style.width=Math.abs(x-z)+"%";b.classList.toggle("cp",mode==="cp");
+        var t=c.querySelector(".dvval");t.innerHTML=(v>0?"+":"−")+Math.abs(v).toFixed(1)+(s?"<sup>&dagger;</sup>":"");t.style.left=(v>=0?x+1.5:Math.max(0,x-1.5))+"%";
+        t.style.transform=v>=0?"translateY(-50%)":"translate(-100%,-50%)";
+        t.style.color=s?"var(--accent-ink)":"var(--ink2)";
+      });
+    });
+  }
+  tabs("cptabs",function(d){mode=d.c;render();});
+  render();
+})();
+
+/* ---------- SFT (Tables 3, 16) ---------- */
+(function(){
+  var D={verdict:[["Base",58.4,36.9,60.9,"+24.1",1,"+2.5",0],["All replies",62.5,57.8,68.6,"+10.8",1,"+6.0",1],["Random, same size",60.6,50.0,69.7,"+19.7",1,"+9.1",1],["WHOM selection",62.8,36.7,70.5,"+33.7",1,"+7.7",1]],
+         warrant:[["Base",43.4,42.6,47.4,"+4.9",0,"+4.1",0],["All replies",49.4,51.1,51.7,"+0.6",0,"+2.2",0],["Random, same size",44.5,49.2,46.4,"−2.9",0,"+1.9",0],["WHOM selection",46.4,16.3,70.0,"+53.7",1,"+23.6",1]],
+         evidence:[["Base",45.1,42.1,42.5,"+0.4",0,"−2.7",0],["All replies",41.4,40.0,41.0,"+1.1",0,"−0.4",0],["Random, same size",44.8,41.6,42.4,"+0.8",0,"−2.4",0],["WHOM selection",44.0,40.4,44.5,"+4.0",0,"+0.4",0]]};
+  var el=document.getElementById("sft"), part="warrant";
+  var html="";for(var i=0;i<4;i++){html+='<div class="sftrow'+(i===3?' hl':'')+'" data-i="'+i+'"><div class="slab"></div><div class="bars3"><div class="b3 none"><i></i><span></span></div><div class="b3 other"><i></i><span></span></div><div class="b3 own"><i></i><span></span></div></div><div class="sftd"></div></div>';}
+  el.innerHTML=html;
+  function render(){
+    el.querySelectorAll(".sftrow").forEach(function(row){
+      var r=D[part][+row.dataset.i];
+      row.querySelector(".slab").innerHTML=r[0]==="WHOM selection"?'<span class="sc">Whom</span> selection':r[0];
+      ["none","other","own"].forEach(function(k,j){var b=row.querySelector(".b3."+k),v=r[1+j];b.querySelector("i").style.width=(v/80*100)+"%";var s=b.querySelector("span");s.style.left=(v/80*100)+"%";s.textContent=v.toFixed(1);});
+      row.querySelector(".sftd").innerHTML='&Delta;<sub>match</sub> <b'+(r[5]?'':' style="color:var(--ink2)"')+'>'+r[4]+(r[5]?"<sup>&dagger;</sup>":"")+'</b><br>&Delta;<sub>add</sub> '+r[6]+(r[7]?"<sup>&dagger;</sup>":"");
+    });
+  }
+  tabs("sfttabs",function(d){part=d.p;render();});
+  render();
+})();
+
+/* ---------- Game 1: be the simulator ---------- */
+(function(){
+  var HIST={
+    A:[["A mother who swore at the poster asks to be left off the wedding guest list","NTA","keep the date and place from her."],
+       ["A father books flights to stay at the poster&rsquo;s home for Christmas without asking","NTA","&ldquo;That&rsquo;s your boundary to enforce.&rdquo;"],
+       ["A mother who spent her savings asks her adult son to help with her bills","NTA","adult children owe their parents no support."],
+       ["The in-laws paid for a trip, and after a terrifying flight the poster drives home","NTA","a gift comes without strings."],
+       ["Relatives take offence when the poster leaves an aunt&rsquo;s viewing early","NTA","mourners gather to grieve together."],
+       ["A mother presses the poster&rsquo;s family to spend a weekend with her","NTA","the poster may decline, and a refusal deserves respect."],
+       ["The poster moves a toddler away from an older child&rsquo;s meltdown at a playground","NTA","the child&rsquo;s safety comes first."],
+       ["A roommate bends the poster&rsquo;s collectible cards after being told not to","NTA","she will not accept a refusal."],
+       ["Roommates keep entering the poster&rsquo;s room after being asked for space","NTA","they disregard a refusal."],
+       ["The poster does not want to attend a widowed mother&rsquo;s quick remarriage","NTA","each may grieve in their own way."],
+       ["A roommate&rsquo;s partner has moved in and leaves the toilet dirty","YTA","a very soft YTA; the poster should raise it with the roommate."],
+       ["A mother raises her hard childhood in every argument with her daughter","NTA","she uses her past to keep control."]],
+    B:[["After the mother of his toddlers dies, a father wants to skip the long trip home for Thanksgiving","NTA","family should support each other, especially now."],
+       ["A sister-in-law keeps raising her childcare price","NTA","what matters now is stability for the child."],
+       ["A parent won&rsquo;t get a new dog the teen would leave behind for college","NTA","a pet is a lifetime commitment and is owed care."],
+       ["A driver nearly hits an unleashed dog and snaps at the owner","NTA","letting a dog run loose is irresponsible."],
+       ["A friend who drives her for groceries keeps smoking around her, which she fears could bring police trouble","NTA","he doesn&rsquo;t care that he puts her at risk."],
+       ["A woman with a strained family is asked to be her sister&rsquo;s maid of honor","NTA","say no, and protect your peace."],
+       ["Siblings want 19 people in three small cottages for a family weekend","NTA","there is a bare minimum of space."],
+       ["A brother just out of jail moves back home","NTA","get a lock for your door and take care of yourself."],
+       ["An acquaintance switches seats to sit next to him on a long flight","NTA","just say you plan to sleep."],
+       ["In-laws expect the couple to host five relatives for the wedding","NTA","offer an arrangement that works for everyone."],
+       ["Parents demand a teen give her late grandfather&rsquo;s dolls to her toddler sister","NTA","find a used one and play dolls together."],
+       ["A classmate copies all of her math work","NTA","tell the teacher; your needs matter as much as hers."]]
+  };
+  var ITEMS=[
+    {who:"A",post:"A wife asks her husband to change out of stained, torn work pants before dinner at a chain restaurant, and he refuses because they are comfortable. They often disagree about this, as when she asks him to change out of pajamas before grocery shopping. She asks whether she is the asshole.",
+     opts:["Autonomy/Boundaries","Care/Harm Prevention","Tradition/Social Conventions","Fairness/Reciprocity"],ans:"Autonomy/Boundaries",
+     why:"From the post alone, Tradition (dress for the occasion) is a fair guess. This commenter&rsquo;s history keeps backing a person&rsquo;s right to decide and to refuse: &ldquo;That&rsquo;s your boundary to enforce,&rdquo; &ldquo;a refusal deserves respect.&rdquo; This item is the training example in Figure 11 of the paper.",
+     swap:"Commenter B&rsquo;s history keeps protecting someone from harm, and here it points to Care."},
+    {who:"A",post:"After 30 hours awake for his thesis defense (he got an A), a student falls asleep for eight hours with his phone on silent. He wakes to 30 missed calls; his parents and grandmother accuse him of partying and call him irresponsible for scaring them. He asks whether he is the asshole.",
+     opts:["Autonomy/Boundaries","Care/Harm Prevention","Tradition/Social Conventions","Fairness/Reciprocity"],ans:"Autonomy/Boundaries",
+     why:"From the post alone, Care is tempting: his family was frightened. This commenter reads it as an adult&rsquo;s life being policed, the same way they read the father booking flights and the roommates walking in.",
+     swap:"With Commenter B&rsquo;s history, Care looks like the safe bet, and it is wrong for this person."},
+    {who:"B",post:"A woman due in July hears that her mother-in-law plans to stay for one to two weeks from the due date. The couple wanted no visitors in the first week. Her partner must travel for work for 11 weeks in September, so she wants to ask the mother-in-law to come then instead. Would she be the asshole for asking her to wait?",
+     opts:["Autonomy/Boundaries","Role-based Responsibility","Care/Harm Prevention","Tradition/Social Conventions"],ans:"Care/Harm Prevention",
+     why:"Read as a boundary case (the couple decides who visits), Autonomy is the trap. This commenter&rsquo;s replies keep returning to someone who needs looking after: a grieving father, a child&rsquo;s stability, a friend put at risk.",
+     swap:"Commenter A&rsquo;s history would send you straight to Autonomy here."},
+    {who:"B",post:"Waiting for a friend, a man sees a couple filming a homeless man as they hand him groceries. The man hides his face and turns to the wall, but they keep filming. He steps in and tells them to give the food without the camera; they get angry about losing footage for their page. He wonders whether he should have stayed out of it.",
+     opts:["Honesty/Communication","Tradition/Social Conventions","Autonomy/Boundaries","Care/Harm Prevention"],ans:"Care/Harm Prevention",
+     why:"The man never agreed to the camera, so Autonomy reads well from the post alone. This commenter&rsquo;s history keeps choosing the person who is hurting.",
+     swap:"Commenter A&rsquo;s history would read this as consent and boundaries, and answer Autonomy."}
+  ];
+  var LET="ABCD", card=document.getElementById("g1"), scoreEl=document.getElementById("g1score");
+  var idx=0, res=[];
+  function histHTML(k){
+    return HIST[k].map(function(h,i){return '<li><em>'+(i+1)+'</em><span>'+h[0]+'; <span class="vd">'+h[1]+'</span>, '+h[2]+'</span></li>';}).join("");
+  }
+  function render(){
+    var it=ITEMS[idx], other=it.who==="A"?"B":"A";
+    var st={stage:0,first:null,hist:"own"};
+    card.innerHTML=
+      '<div class="qhead"><span class="pill"><span class="ico own">'+it.who+'</span>Commenter '+it.who+' &middot; post '+(idx+1)+' of '+ITEMS.length+'</span><span>Warrant prediction</span></div>'+
+      '<div class="post"><b>NEW POST (PARAPHRASED)</b>'+it.post+'</div>'+
+      '<p class="qq">Which principle will Commenter '+it.who+'&rsquo;s reply rest on?</p>'+
+      '<div class="steplbl" id="g1s">Step 1 &middot; From the post alone</div>'+
+      '<div class="popts">'+it.opts.map(function(p,i){return '<button class="popt" data-p="'+p+'">'+LET[i]+'. '+p+'<small>'+SHORT[p]+'</small></button>';}).join("")+'</div>'+
+      '<div class="histwrap" id="g1h"><div class="steplbl">Step 2 &middot; Read their 12 earlier replies, then keep or change your answer</div>'+
+        '<div class="histtabs"><button class="on" data-h="own"><span class="ico own">'+it.who+'</span>Their history</button><button data-h="other"><span class="ico other">'+SWAP+'</span>Someone else&rsquo;s</button></div>'+
+        '<ol class="hist" id="g1list">'+histHTML(it.who)+'</ol><div class="histnote" id="g1hn">Commenter '+it.who+'&rsquo;s 12 most recent replies before the cut, paraphrased as in Figure 11.</div></div>'+
+      '<div class="qreveal" id="g1r"></div>'+
+      '<div class="gnav"><div class="dots">'+ITEMS.map(function(_,i){var c=i<idx?(res[i].second?"r":"w"):(i===idx?"cur":"");return '<i class="'+c+'"></i>';}).join("")+'</div><button class="nbtn" id="g1n" disabled>'+(idx<ITEMS.length-1?"Next post &rarr;":"See your score &rarr;")+'</button></div>';
+    var hw=card.querySelector("#g1h"), list=card.querySelector("#g1list"), hn=card.querySelector("#g1hn");
+    card.querySelector(".histtabs").addEventListener("click",function(e){
+      var b=e.target.closest("button");if(!b||st.stage===2)return;
+      st.hist=b.dataset.h;card.querySelectorAll(".histtabs button").forEach(function(x){x.classList.toggle("on",x===b);});
+      var k=st.hist==="own"?it.who:other;list.innerHTML=histHTML(k);list.classList.toggle("other",st.hist==="other");list.scrollTop=0;
+      hn.innerHTML=st.hist==="own"?"Commenter "+it.who+"&rsquo;s 12 most recent replies before the cut, paraphrased as in Figure 11.":"Commenter "+other+"&rsquo;s history in its place: same length, a different person. Answering from it is what S<sup>other</sup> measures.";
+    });
+    card.querySelectorAll(".popt").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        if(st.stage===0){
+          st.first=btn.dataset.p;st.stage=1;btn.classList.add("first");btn.insertAdjacentHTML("beforeend",'<span class="tag">post only</span>');
+          card.querySelector("#g1s").innerHTML="Step 1 &middot; From the post alone <span style='color:var(--mut);font-weight:600'>&middot; locked in</span>";
+          hw.style.display="block";hw.scrollIntoView({behavior:"smooth",block:"nearest"});
+          return;
+        }
+        if(st.stage!==1)return;
+        st.stage=2;var pick=btn.dataset.p, ok2=pick===it.ans, ok1=st.first===it.ans;
+        res[idx]={first:ok1,second:ok2,hist:st.hist};
+        card.querySelectorAll(".popt").forEach(function(b){b.disabled=true;if(b.dataset.p===it.ans)b.classList.add("gold");});
+        btn.classList.add(ok2?"right":"wrong");
+        var r=card.querySelector("#g1r");r.classList.toggle("miss",!ok2);
+        r.innerHTML='<div class="verdict">Post only: '+(ok1?'<span class="ok">right</span>':'<span class="no">wrong</span>')+' &nbsp;&middot;&nbsp; With '+(st.hist==="own"?"their":"someone else&rsquo;s")+' history: '+(ok2?'<span class="ok">right</span>':'<span class="no">wrong</span>')+'</div>'+
+          'Their reply rests on <b>'+it.ans+'</b>. '+it.why+'<div class="swapnote">'+SWAP+' '+it.swap+(st.hist==="other"?" You answered while reading it.":"")+'</div>';
+        r.style.display="block";
+        card.querySelector("#g1n").disabled=false;
+      });
+    });
+    card.querySelector("#g1n").addEventListener("click",function(){
+      if(idx<ITEMS.length-1){idx++;render();card.scrollIntoView({behavior:"smooth",block:"start"});}
+      else showScore();
+    });
+  }
+  function bar(lbl,v,col,txt,rng){
+    var inner=rng?'<i class="rng" style="left:'+rng[0]+'%;width:'+(rng[1]-rng[0])+'%;color:'+col+';background:'+col+'22"></i>':'<i style="width:'+v+'%;background:'+col+'"></i>';
+    return '<div class="cmp"><span>'+lbl+'</span><div class="bar">'+inner+'</div><b>'+txt+'</b></div>';
+  }
+  function showScore(){
+    var n=ITEMS.length, a=0, b=0, sw=0;res.forEach(function(r){a+=r.first?1:0;b+=r.second?1:0;sw+=r.hist==="other"?1:0;});
+    scoreEl.innerHTML='<h3>Your score</h3>'+
+      bar("You, post only",a/n*100,"var(--none)",a+"/"+n)+
+      bar("You, with the history",b/n*100,"var(--own)",b+"/"+n)+
+      '<div class="cmpsep"></div>'+
+      bar("LLMs, no history",0,"var(--none)","50&ndash;59",[50.3,59.1])+
+      bar("LLMs, someone else&rsquo;s history",0,"var(--other)","44&ndash;50",[43.7,50.4])+
+      bar("LLMs, own history",0,"var(--own)","54&ndash;63",[54.1,63.3])+
+      bar("Counting rule (labels only)",76.9,"var(--ink)","76.9")+
+      bar("Most common principle",38.3,"#b9b7b1","38.3")+
+      '<p class="outro">You just ran the <span class="sc">Whom</span> protocol on yourself: the same question under different histories. On these four posts someone else&rsquo;s history points to the wrong principle every time'+(sw?' (you tried it on '+sw+')':'')+', which is why a gain counts as the person&rsquo;s only when their own history beats someone else&rsquo;s. Four items are far too few to tell anything, which is why the paper averages within each person, then over people, and tests across people. LLM rows: the six LLMs on the 769 warrant items (Table 2).</p>'+
+      '<div class="gnav"><span></span><button class="nbtn ghost" id="g1again">Play again</button></div>';
+    scoreEl.style.display="block";scoreEl.scrollIntoView({behavior:"smooth",block:"nearest"});
+    document.getElementById("g1again").addEventListener("click",function(){idx=0;res=[];scoreEl.style.display="none";render();card.scrollIntoView({behavior:"smooth",block:"start"});});
+  }
+  render();
+})();
+
+/* ---------- Game 2: which reason is yours? ---------- */
+(function(){
+  var C="Care/Harm Prevention",S="Safety/Risk Management",F="Fairness/Reciprocity",A="Autonomy/Boundaries",P="Property/Consent",H="Honesty/Communication",R="Role-based Responsibility",L="Relational Loyalty",AU="Authority/Hierarchy",T="Tradition/Social Conventions";
+  var ALL=[C,S,F,A,P,H,R,L,AU,T];
+  /* each principle is offered twice among the odd scenarios and twice among the even ones */
+  var SC=[
+    ["Your roommate took your car without asking at 2 a.m. to drive a friend to the hospital. You&rsquo;re furious. AITA?",[[C,"Someone needed help fast. That outweighs asking first."],[P,"It&rsquo;s your car. Using it without asking is wrong, whatever the reason."],[H,"They could have texted you the moment they left."],[S,"A sleepy 2 a.m. drive in someone else&rsquo;s car put everyone at risk."]]],
+    ["A cousin wore a white dress to your wedding after the invitation asked guests not to. You asked her to change. AITA?",[[F,"Every other guest followed the request; she doesn&rsquo;t get a pass."],[A,"It&rsquo;s her dress; guests choose what they wear."],[T,"Not wearing white to a wedding is basic etiquette."],[L,"She&rsquo;s family. Family backs you on your day."]]],
+    ["Your manager keeps asking you to stay late on Fridays. You&rsquo;ve started leaving at 5 sharp. AITA?",[[R,"The job is 9 to 5. That&rsquo;s the duty you signed up for."],[A,"Your evenings are yours to spend."],[AU,"Your manager sets the schedule; ignoring them undermines the lead."],[F,"Unpaid extra hours are not a fair trade."]]],
+    ["Your brother asked you to tell his wife he was with you last weekend. You refused. AITA?",[[L,"He&rsquo;s your brother; you should have his back."],[H,"Lying to his wife is the problem, full stop."],[A,"Their marriage is theirs to handle; you get to stay out of it."],[C,"Think of how hurt his wife would be."]]],
+    ["Your friend keeps asking you to pick up the dinner bill because you earn more. You said no. AITA?",[[T,"Splitting the bill is just how it&rsquo;s done."],[F,"Everyone should pay their own share."],[L,"Friends help each other out when they can."],[P,"Your money is yours to decide on."]]],
+    ["Your 17-year-old wants to go to a party with no adults around. You said no. AITA?",[[AU,"You&rsquo;re the parent; house rules stand."],[C,"Being the only one kept home will humiliate him."],[S,"An unsupervised party is a real risk."],[R,"Keeping a teen out of trouble is part of a parent&rsquo;s job."]]],
+    ["Your elderly mother wants to move in with you. Your spouse said no, and you sided with your spouse. AITA?",[[A,"It&rsquo;s your home and your marriage; the two of you decide who lives there."],[L,"Your spouse comes first."],[C,"She needs looking after, and you could give it."],[R,"Adult children owe their parents support."]]],
+    ["A coworker presented your idea as theirs in a meeting. You corrected them in front of everyone. AITA?",[[P,"It was your idea. Taking it is taking what&rsquo;s yours."],[AU,"That was your boss&rsquo;s call to sort out, not the whole room&rsquo;s."],[F,"Credit should go to whoever did the work."],[H,"The room deserved the truth about whose idea it was."]]],
+    ["The passenger in front of you reclined all the way during the meal. You asked them to raise it. AITA?",[[S,"A reclined seat over a tray of hot drinks is an accident waiting to happen."],[T,"Everyone knows you put your seat up for meals."],[AU,"If the crew allows reclining, it&rsquo;s allowed."],[H,"A quick &ldquo;mind if I recline?&rdquo; would have avoided all of it."]]],
+    ["Your housemate throws loud parties on weeknights and their guests wander into your room. You complained to the landlord. AITA?",[[R,"Whoever hosts is responsible for their guests."],[T,"Keeping it down on weeknights is basic shared-house etiquette."],[P,"Strangers in your room, near your things, without your OK."],[S,"Unknown people wandering the house is a safety risk."]]]
+  ];
+  var el=document.getElementById("g2"), picks=[], i=0;
+  function q(){
+    var s=SC[i];
+    el.innerHTML='<div class="qhead"><span>Conflict '+(i+1)+' of '+SC.length+'</span><span>'+(i%2===0?"odd half":"even half")+'</span></div>'+
+      '<div class="post"><b>POST</b>'+s[0]+'</div><p class="qq">What matters most to you here?</p>'+
+      '<div class="g2opts">'+s[1].map(function(o,j){return '<button class="g2opt" data-j="'+j+'">'+o[1]+'</button>';}).join("")+'</div>'+
+      '<div class="g2prog"><i style="width:'+(i/SC.length*100)+'%"></i></div>';
+    el.querySelectorAll(".g2opt").forEach(function(b){b.addEventListener("click",function(){picks[i]=s[1][+b.dataset.j][0];i++;if(i<SC.length)q();else result();});});
+  }
+  function resid(idxs){var r={};ALL.forEach(function(p){r[p]=-0.1;});idxs.forEach(function(k){r[picks[k]]+=1/idxs.length;});return r;}
+  function tops(r){var m=-1;ALL.forEach(function(p){if(r[p]>m+1e-9)m=r[p];});return ALL.filter(function(p){return Math.abs(r[p]-m)<1e-9;});}
+  function cos(a,b){var s=0,x=0,y=0;ALL.forEach(function(p){s+=a[p]*b[p];x+=a[p]*a[p];y+=b[p]*b[p];});return s/Math.sqrt(x*y);}
+  function short(p){return p.split("/")[0].replace("Role-based Responsibility","Role responsibility").replace("Relational Loyalty","Loyalty");}
+  function result(){
+    var all=[0,1,2,3,4,5,6,7,8,9], odd=[0,2,4,6,8], even=[1,3,5,7,9];
+    var ra=resid(all), ro=resid(odd), re=resid(even), top=tops(ra), to=tops(ro), te=tops(re), c=cos(ro,re);
+    var shared=to.filter(function(p){return te.indexOf(p)>-1;}), pass=shared.length>0;
+    var order=ALL.slice().sort(function(a,b){return (ra[b]-ra[a])||(REDDIT[b][0]-REDDIT[a][0]);});
+    var prof=order.map(function(p){var share=(ra[p]+0.1)*100;return '<div class="prof'+(top.indexOf(p)>-1&&share>10?" top":"")+'"><span class="pn">'+p+'</span><div class="bar"><i style="width:'+share+'%"></i><span class="ten" style="left:10%"></span><span class="reddit" style="left:'+REDDIT[p][0]+'%" title="r/AITA share"></span></div><span class="pv"><b style="color:var(--ink)">'+Math.round(share)+'%</b> &middot; r/AITA '+REDDIT[p][0]+'</span></div>';}).join("");
+    var topTxt=top.map(short).join(" + ");
+    var flat=(ra[top[0]]+0.1)*100<=20&&top.length>2;
+    el.innerHTML='<div class="qhead"><span>Your profile</span><span>10 of 10 answered</span></div>'+
+      '<p class="qq" style="margin-top:0">Your characteristic answer: <span style="color:var(--accent-ink)">'+(flat?"none stands out":topTxt)+'</span></p>'+
+      '<p class="body" style="font-size:14px;margin-bottom:10px">'+(flat?"Your picks spread across the principles, close to the 10% a player with no pattern would give each.":"You chose it "+Math.round((ra[top[0]]+0.1)*100)+"% of the time against the 10% a pattern-free player would give it. That excess over everyone, not the raw share, is what <span class='sc'>Whom</span> calls the peak of a distinctive profile.")+'</p>'+
+      prof+
+      '<div class="slegend"><span><i class="sw" style="background:var(--own)"></i>your share (left number)</span><span><b class="ln" style="display:inline-block;height:11px;border-left:1.5px dashed var(--ink);margin-right:6px;vertical-align:-1px"></b>10%: no pattern</span><span><i class="sw" style="background:var(--ink);transform:rotate(45deg) scale(.7)"></i>r/AITA share of later replies (Table 8)</span></div>'+
+      '<div class="halves"><div class="half">Odd conflicts (1, 3, 5, 7, 9)<b>'+to.map(short).join(" + ")+'</b></div><div class="half">Even conflicts (2, 4, 6, 8, 10)<b>'+te.map(short).join(" + ")+'</b></div><div class="half">Agreement of the two halves<b>cos = '+(isFinite(c)?c.toFixed(2):"–")+'</b>Person A in the paper: 0.90</div></div>'+
+      '<div class="passbox'+(pass?"":" fail")+'">'+(pass?"<b>Your difference recurs.</b> Both halves name "+shared.map(short).join(" + ")+", so you pass the split-half check, and <span class='sc'>Whom</span> would keep you. Of the 100 r/AITA warrant people, 62 pass it; their early labels predict their later ones 14.8 points better than someone else&rsquo;s do, against 9.1 for the 38 who fail.":"<b>Your halves disagree.</b> On this much data that is normal; five answers per half are very few. Of the 100 r/AITA warrant people, 38 fail this check, and their early labels predict their later ones less well (9.1 points over someone else&rsquo;s, against 14.8 for the 62 who pass).")+'</div>'+
+      '<p class="outro">If you were an r/AITA commenter, a benchmark would now ask about your later replies where others disagree, and credit a simulator with you only if your history beats someone else&rsquo;s. Ten invented conflicts make a toy; the people in the benchmark have at least 20 replies on each side of the cut.</p>'+
+      '<div class="gnav"><span></span><button class="nbtn ghost" id="g2again">Play again</button></div>';
+    document.getElementById("g2again").addEventListener("click",function(){picks=[];i=0;q();el.scrollIntoView({behavior:"smooth",block:"start"});});
+  }
+  q();
+})();
+
+/* ---------- sources ---------- */
+(function(){
+  var KV={
+    aita:[["Domain","moral judgment of a private conflict"],["Difference from","values and moral principles"],["Situation","a post describing an interpersonal conflict"],["Co-respondents","other commenters on the post"],["Position","verdict (NTA or YTA)"],["Reasons","warrant (one of ten principles)"],["History","replies before 2026-02-28"],["Stable people","the two halves of the history agree"]],
+    afd:[["Domain","institutional decision under written policy"],["Difference from","policy reading, expertise, community role"],["Situation","a deletion discussion (article title and nomination)"],["Co-respondents","other eligible editors voting in the discussion (at least three)"],["Position","vote (keep, delete, merge, redirect)"],["Reasons","deletion-policy ground (one of 12)"],["History","the first 70% of an editor&rsquo;s votes in time"],["Stable people","the two halves of the early votes agree"]],
+    socc:[["Domain","public opinion on news"],["Difference from","stance and choice of claims"],["Situation","an opinion article (its claims and opening)"],["Co-respondents","other top-level commenters on the article (at least three)"],["Position","stance toward a claim (accept, reject, qualify)"],["Reasons","the article claim the comment engages"],["History","comments before the last 25"],["Stable people","the two halves of the early labels agree"]]
+  };
+  var RES={
+    aita:{rows:[["Verdict","6 LLMs","+3.9 to +17.8","all &dagger;"],["Warrant","6 LLMs","+5.4 to +17.6","all &dagger;"],["Evidence","6 LLMs","&minus;0.3 to +5.3","none"]],cnt:[["Verdict","+10.3&dagger;"],["Warrant","+12.6&dagger;"],["Evidence","+1.3"]],
+          text:"A person&rsquo;s own history beats someone else&rsquo;s for all six LLMs on verdicts and warrants; on evidence, which the post fixes, no LLM gains."},
+    afd:{rows:[["Vote","GPT-5.6-luna","40.7 / 44.1 / 72.4","+28.3&dagger;"],["","Qwen-plus","41.1 / 45.1 / 74.1","+28.9&dagger;"],["","Qwen3-8B","42.9 / 44.8 / 76.2","+31.4&dagger;"],["Ground","GPT-5.6-luna","40.9 / 41.0 / 55.2","+14.2&dagger;"],["","Qwen-plus","39.5 / 43.1 / 54.5","+11.3&dagger;"],["","Qwen3-8B","28.1 / 34.9 / 43.5","+8.6&dagger;"]],cnt:[["Vote","+41.1&dagger;"],["Ground","+22.5&dagger;"]],
+          text:"On votes and policy grounds, a person&rsquo;s own history beats both someone else&rsquo;s and no history for all three LLMs. An editor&rsquo;s vote depends more on the editor than on the discussion: the early votes add 38.0% of its uncertainty, the discussion explains 13.9%."},
+    socc:{rows:[["Claim","GPT-5.6-luna","25.5 / 27.1 / 32.2","+5.1"],["","Qwen-plus","28.2 / 25.7 / 32.6","+6.9&dagger;"],["","Qwen3-8B","28.8 / 29.2 / 32.0","+2.8"],["Stance","GPT-5.6-luna","34.7 / 35.0 / 46.4","+11.3&dagger;"],["","Qwen-plus","37.3 / 40.1 / 44.5","+4.4&dagger;"],["","Qwen3-8B","40.1 / 39.4 / 40.8","+1.4"]],cnt:[["Claim","+3.1&dagger;"],["Stance","+9.7&dagger;"]],
+          text:"On stances, a person&rsquo;s own history beats both for GPT-5.6-luna and Qwen-plus. Claims carry the weakest signal, a counting gain of 3.1 points, and only Qwen-plus gains significantly there, so the labels alone show which parts of a source support individual simulation."}
+  };
+  var INST={
+    aita:'<div class="inst"><div class="ih">Three questions about one later reply</div><div class="sec">Verdict</div>What stance would this person take on whether the person in the scenario is the asshole? &nbsp;A. NTA &nbsp;B. YTA<div class="sec">Warrant</div>Which moral reasoning warrant would this person most likely use to judge this scenario? Four principles with definitions: the person&rsquo;s own and up to three that the co-respondents gave.<div class="sec">Evidence</div>Which piece of evidence would this person most likely focus on when making their judgment? The post&rsquo;s four parts, in story order. A control: the post leaves little room for the person.</div>',
+    afd:'<div class="inst"><div class="ih">Discussion &middot; Articles for deletion, September 2011</div><div><b>Minty (My Little Pony).</b> <i>Nomination:</i> This character is not notable enough to be an independent article.</div>'+
+      '<div class="row"><span><i>Co-respondent:</i> Fails WP:V. The contents are currently based on fansites an&hellip;</span><span>Delete &middot; Sourcing and verifiability</span></div>'+
+      '<div class="row"><span><i>Co-respondent:</i> This seems an obvious merge candidate, to List of My Little&hellip;</span><span>Merge &middot; Merge or redirect target</span></div>'+
+      '<div class="row me"><span>This person: Delete. Does not seem to meet the general notability&hellip;</span><span>Delete &middot; General notability</span></div>'+
+      '<div class="sec">History: this editor&rsquo;s earlier votes (about 6,000 words, all before the cut)</div><div><i>Transformers: Timelines.</i> Strong delete. Original research, no third-party sources to verify notability. It does not &hellip;</div><div><i>Timeline of the Valiant Universe.</i> Delete. The article doesn&rsquo;t meet the criteria of the general notability guideline &hellip;</div>'+
+      '<div class="sec">Questions on the new discussion (the person&rsquo;s vote is not shown)</div><div>Vote: <span class="ok">A. Delete &#10003;</span> &nbsp;B. Keep &nbsp;C. Redirect &nbsp;D. Merge</div><div style="margin-top:4px">Ground, one of 12: &hellip; E. Sourcing and verifiability &middot; J. Original research or synthesis &middot; K. Not encyclopedic &middot; <span class="ok">L. General notability &#10003;</span></div></div>',
+    socc:'<div class="inst"><div class="ih">Article &middot; Globe and Mail opinion, October 2016</div><div><b>The challenges ahead for Liberals&rsquo; carbon plan.</b> <i>Central question:</i> Should Canada implement a national carbon price with a federally mandated minimum level?</div>'+
+      '<div class="opts2" style="margin-top:6px"><span>c1 A federal minimum price that provinces can meet or exceed</span><span>c2 The 2030 target needs carbon pricing plus more regulation</span><span>c3 Uneven provincial prices undermine cost-effectiveness</span><span>c4 Equivalency checks and exemptions weaken the national plan</span><span>c5 Linking climate action to pipelines wins support in Alberta</span><span>c6 Durable policy matters more than ever-higher targets</span></div>'+
+      '<div class="row" style="margin-top:6px"><span><i>Co-respondent:</i> Carbon taxes do nothing to help the environment.</span><span>c1 &middot; Rejects</span></div>'+
+      '<div class="row"><span><i>Co-respondent:</i> Changing public opinion and consumer preference is very tough. Price point will hopeful&hellip;</span><span>c2 &middot; Qualifies</span></div>'+
+      '<div class="row me"><span>This person: A TMX kiboshing &hellip; would be politically thermonuclear for Rachel Notley.</span><span>c5 &middot; Accepts</span></div>'+
+      '<div class="sec">Questions on the new article (the person&rsquo;s comment is not shown)</div><div>Claim: A. None of the listed claims &middot; B. c3 &middot; <span class="ok">C. c5 &#10003;</span> &middot; D. c6 &middot; E. c1 &middot; F. c2 &nbsp;&nbsp; Stance: <span class="ok">Accepts &#10003;</span> &middot; Rejects &middot; Qualifies</div><div style="margin-top:4px;color:var(--mut)">The options are the claims other commenters engaged, plus none; no one engaged c4, so it is not offered.</div></div>'
+  };
+  var el=document.getElementById("srcpanel");
+  function render(s){
+    var R=RES[s];
+    var head=s==="aita"?'<tr><th class="l">Question</th><th class="l">LLMs</th><th>&Delta;<sub>match</sub></th><th>significant</th></tr>':'<tr><th class="l">Question</th><th class="l">LLM</th><th>none / other / own</th><th>&Delta;<sub>match</sub></th></tr>';
+    el.innerHTML='<div class="srcgrid"><div class="kv">'+KV[s].map(function(r){return '<div><span>'+r[0]+'</span><span>'+r[1]+'</span></div>';}).join("")+'</div>'+
+      '<div><p class="body" style="font-size:14.5px">'+R.text+'</p><div class="tablewrap" style="margin-top:8px"><table class="mini"><thead>'+head+'</thead><tbody>'+R.rows.map(function(r){return '<tr><td class="l">'+r[0]+'</td><td class="l">'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td></tr>';}).join("")+'</tbody></table></div>'+
+      '<p class="tnote">Counting gain from labels alone, own minus someone else&rsquo;s early labels: '+R.cnt.map(function(c){return c[0].toLowerCase()+" "+c[1];}).join(" &middot; ")+'. Tables 2, 18, 19.</p></div></div>'+INST[s];
+  }
+  tabs("srctabs",function(d){render(d.s);});
+  render("aita");
+})();
+
+/* ---------- small things ---------- */
+(function(){
+  var lb=document.getElementById("lightbox");
+  document.getElementById("pipefig").addEventListener("click",function(){lb.classList.add("on");});
+  lb.addEventListener("click",function(){lb.classList.remove("on");});
+  document.querySelectorAll(".copy").forEach(function(b){b.addEventListener("click",function(){
+    var pre=document.getElementById(b.dataset.for), txt=pre.innerText.replace(/^copy\s*/,"");
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){b.textContent="copied";setTimeout(function(){b.textContent="copy";},1400);}).catch(function(){b.textContent="select & copy";});
+  });});
+  document.querySelectorAll('[data-todo]').forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();toast("Link coming soon.");});});
+})();
+
+/* ---------- easter egg: crowd mode ---------- */
+(function(){
+  var buf="", crowd=false, tagline=document.querySelector(".tagline"), tagHTML=tagline.innerHTML;
+  function goCrowd(){
+    if(crowd)return;crowd=true;document.body.classList.add("crowd");
+    tagline.innerHTML='Can AI simulate <em class="you">anyone</em>? Easy: everyone says NTA.';
+    bind();toast("crowd mode: you now answer like everyone. type “you” to be someone again.");
+  }
+  function goYou(){
+    if(!crowd)return;crowd=false;document.body.classList.remove("crowd");
+    tagline.innerHTML=tagHTML;bind();toast("Welcome back. That difference was you.",true);
+  }
+  function bind(){
+    var y=tagline.querySelector("em.you"), a=tagline.querySelector("em.any");
+    if(y)y.addEventListener("click",goYou);
+    if(a)a.addEventListener("click",goCrowd);
+  }
+  bind();
+  document.addEventListener("keydown",function(e){
+    if(e.key.length!==1||/input|textarea/i.test(e.target.tagName))return;
+    buf=(buf+e.key.toLowerCase()).slice(-12);
+    if(buf.endsWith("anyone"))goCrowd();
+    else if(crowd&&buf.endsWith("you"))goYou();
+  });
+  console.log("%c\n  ( NTA )  ( NTA )  ( NTA )  ( close it! )\n     |        |        |          |\n    [o]      [o]      [o]        [M]\n\n  You opened the console. Most visitors don’t.\n  That is a difference. Does it recur?\n","color:#c2410c;font-family:monospace;font-size:12px");
+})();
+</script>
+</body>
+</html>
